@@ -23,7 +23,7 @@ import (
 type WalletManager struct {
 	openwallet.AssetsAdapterBase
 
-	// Api             *eos.API                        // 节点客户端
+	Api             *WalletClient                   // 节点客户端
 	Config          *WalletConfig                   // 节点配置
 	Decoder         openwallet.AddressDecoder       //地址编码器
 	TxDecoder       openwallet.TransactionDecoder   //交易单编码器
@@ -36,6 +36,7 @@ type WalletManager struct {
 func NewWalletManager(cacheManager openwallet.ICacheManager) *WalletManager {
 	wm := WalletManager{}
 	wm.Config = NewConfig(Symbol)
+	wm.Api = NewWalletClient(wm.Config.ServerAPI, "", false)
 	// wm.Blockscanner = NewEOSBlockScanner(&wm)
 	wm.Decoder = NewAddressDecoder(&wm)
 	// wm.TxDecoder = NewTransactionDecoder(&wm)
