@@ -342,8 +342,7 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 
 	for _, operation := range transaction.Operations {
 
-		if operation.Type() == types.TransferOpType {
-			transferOperation := operation.(*types.TransferOperation)
+		if transferOperation, ok := operation.(*types.TransferOperation); ok {
 
 			if scanTargetFunc == nil {
 				bs.wm.Log.Std.Error("scanTargetFunc is not configurated")
