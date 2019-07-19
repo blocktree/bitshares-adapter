@@ -135,7 +135,7 @@ type Memo struct {
 
 func (op *TransferOperation) Type() OpType { return TransferOpType }
 
-func (op *TransferOperation) MarshalTransaction(encoder *encoding.Encoder) error {
+func (op *TransferOperation) Marshal(encoder *encoding.Encoder) error {
 	enc := encoding.NewRollingEncoder(encoder)
 	enc.EncodeUVarint(uint64(op.Type()))
 	enc.Encode(op.Fee)
@@ -161,7 +161,7 @@ type LimitOrderCreateOperation struct {
 	Extensions   []json.RawMessage `json:"extensions"`
 }
 
-func (op *LimitOrderCreateOperation) MarshalTransaction(encoder *encoding.Encoder) error {
+func (op *LimitOrderCreateOperation) Marshal(encoder *encoding.Encoder) error {
 	enc := encoding.NewRollingEncoder(encoder)
 
 	enc.EncodeUVarint(uint64(op.Type()))
@@ -187,7 +187,7 @@ type LimitOrderCancelOperation struct {
 	Extensions       []json.RawMessage `json:"extensions"`
 }
 
-func (op *LimitOrderCancelOperation) MarshalTransaction(encoder *encoding.Encoder) error {
+func (op *LimitOrderCancelOperation) Marshal(encoder *encoding.Encoder) error {
 	enc := encoding.NewRollingEncoder(encoder)
 
 	enc.EncodeUVarint(uint64(op.Type()))

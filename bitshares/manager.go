@@ -29,15 +29,15 @@ type WalletManager struct {
 	TxDecoder       openwallet.TransactionDecoder   //交易单编码器
 	Log             *log.OWLogger                   //日志工具
 	ContractDecoder openwallet.SmartContractDecoder //智能合约解析器
-	// Blockscanner    *EOSBlockScanner                //区块扫描器
-	CacheManager openwallet.ICacheManager //缓存管理器
+	Blockscanner    *BtsBlockScanner                //区块扫描器
+	CacheManager    openwallet.ICacheManager        //缓存管理器
 }
 
 func NewWalletManager(cacheManager openwallet.ICacheManager) *WalletManager {
 	wm := WalletManager{}
 	wm.Config = NewConfig(Symbol)
 	wm.Api = NewWalletClient(wm.Config.ServerAPI, "", false)
-	// wm.Blockscanner = NewEOSBlockScanner(&wm)
+	wm.Blockscanner = NewBlockScanner(&wm)
 	wm.Decoder = NewAddressDecoder(&wm)
 	// wm.TxDecoder = NewTransactionDecoder(&wm)
 	wm.Log = log.NewOWLogger(wm.Symbol())

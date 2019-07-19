@@ -17,7 +17,7 @@ type AssetAmount struct {
 	AssetID ObjectID `json:"asset_id"`
 }
 
-func (aa AssetAmount) MarshalTransaction(encoder *encoding.Encoder) error {
+func (aa AssetAmount) Marshal(encoder *encoding.Encoder) error {
 	enc := encoding.NewRollingEncoder(encoder)
 	enc.EncodeLittleEndianUInt64(aa.Amount)
 	enc.Encode(aa.AssetID)

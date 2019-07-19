@@ -1,5 +1,5 @@
 package encoding
 
-type TransactionMarshaller interface {
-	MarshalTransaction(*Encoder) error
+type Marshaller interface {
+	Marshal(*Encoder) error
 }

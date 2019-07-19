@@ -25,7 +25,7 @@ func TestWalletClient_GetBlockByHeight(t *testing.T) {
 }
 
 func TestWalletClient_GetTransaction(t *testing.T) {
-	tx, err := tw.Api.GetTransaction(1545399, 1)
+	tx, err := tw.Api.GetTransaction(1545399, 0)
 	if err != nil {
 		t.Errorf("GetTransaction failed unexpected error: %v\n", err)
 	} else {

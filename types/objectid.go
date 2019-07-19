@@ -41,7 +41,7 @@ func (o *ObjectID) UnmarshalJSON(s []byte) error {
 	return nil
 }
 
-func (o ObjectID) MarshalTransaction(encoder *encoding.Encoder) error {
+func (o ObjectID) Marshal(encoder *encoding.Encoder) error {
 	encoder.EncodeVarint(int64(o.ID))
 	return nil
 }

@@ -11,10 +11,11 @@ type Transaction struct {
 	Expiration     Time       `json:"expiration"`
 	Operations     Operations `json:"operations"`
 	Signatures     []string   `json:"signatures"`
+	TransactionID  string
 }
 
-// MarshalTransaction implements encoding.Marshaller interface.
-func (tx *Transaction) MarshalTransaction(encoder *encoding.Encoder) error {
+// Marshal implements encoding.Marshaller interface.
+func (tx *Transaction) Marshal(encoder *encoding.Encoder) error {
 	if len(tx.Operations) == 0 {
 		return errors.New("no operation specified")
 	}

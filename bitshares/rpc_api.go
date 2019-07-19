@@ -126,8 +126,7 @@ func objectsToParams(objs []types.ObjectID) []string {
 
 // GetBlockchainInfo returns current blockchain data
 func (c *WalletClient) GetBlockchainInfo() (*BlockchainInfo, error) {
-
-	r, err := c.GetObjects(types.ObjectID{2, 1, 0})
+	r, err := c.call("get_dynamic_global_properties", []interface{}{})
 	if err != nil {
 		return nil, err
 	}
@@ -136,23 +135,41 @@ func (c *WalletClient) GetBlockchainInfo() (*BlockchainInfo, error) {
 }
 
 // GetBlockByHeight returns a certain block
-func (c *WalletClient) GetBlockByHeight(height uint64) (*Block, error) {
-	r, err := c.call("get_block", []interface{}{height})
+func (c *WalletClient) GetBlockByHeight(height uint32) (*Block, error) {
+	r, err := c.call("get_block_header", []interface{}{height + 1})
+	if err != nil {
+		return nil, err
+	}
+	header := NewBlockHeader(r)
+
+	r, err = c.call("get_block", []interface{}{height})
 	if err != nil {
 		return nil, err
 	}
 	block := NewBlock(height, r)
+	block.BlockID = header.Previous
+
+	// block.CalculateID()
+	// log.Std.Info("calculated block id:%s\n", block.BlockID)
+
 	return block, nil
 }
 
 // GetTransaction returns the TX
-func (c *WalletClient) GetTransaction(blockNum uint32, trxInBlock uint32) (*types.Transaction, error) {
-	r, err := c.call("get_transaction", []interface{}{blockNum, trxInBlock})
+func (c *WalletClient) GetTransaction(height uint32, trxInBlock int) (*types.Transaction, error) {
+	r, err := c.call("get_transaction", []interface{}{height, trxInBlock})
 	if err != nil {
 		return nil, err
 	}
 	if r.Raw == "null" {
-		return nil, fmt.Errorf("cannot find this transaction: %v, %v", blockNum, trxInBlock)
+		return nil, fmt.Errorf("cannot find this transaction: %v, %v", height, trxInBlock)
 	}
-	return NewTransaction(r)
+	block, err := c.GetBlockByHeight(height)
+	if err != nil {
+		return nil, err
+	}
+	if len(block.TransactionIDs) <= trxInBlock {
+		return nil, fmt.Errorf("cannot find this transaction on the block: %v, %v", height, trxInBlock)
+	}
+	return NewTransaction(r, block.TransactionIDs[trxInBlock])
 }

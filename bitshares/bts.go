@@ -57,16 +57,16 @@ func (wm *WalletManager) GetTransactionDecoder() openwallet.TransactionDecoder {
 }
 
 //GetBlockScanner 获取区块链
-// func (wm *WalletManager) GetBlockScanner() openwallet.BlockScanner {
+func (wm *WalletManager) GetBlockScanner() openwallet.BlockScanner {
 
-// 	return wm.Blockscanner
-// }
+	return wm.Blockscanner
+}
 
 //LoadAssetsConfig 加载外部配置
 func (wm *WalletManager) LoadAssetsConfig(c config.Configer) error {
 
 	wm.Config.ServerAPI = c.String("serverAPI")
-	// wm.Api = eos.New(wm.Config.ServerAPI)
+	wm.Api = NewWalletClient(wm.Config.ServerAPI, "", false)
 	wm.Config.DataDir = c.String("dataDir")
 
 	//数据文件夹
