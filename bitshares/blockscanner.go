@@ -262,7 +262,9 @@ func (bs *BtsBlockScanner) BatchExtractTransactions(blockHeight uint64, blockHas
 			signedTransaction := txsigner.NewSignedTransaction(&tx)
 			txid, _ := signedTransaction.ID()
 			tx.TransactionID = txid
-			bs.wm.Log.Std.Debug("transaction: %s, %s", idx, tx.TransactionID)
+			if len(txid) == 0 {
+				bs.wm.Log.Std.Debug("block: %s %s", eblockHeight, idx)
+			}
 
 			go func(mBlockHeight uint64, mTx *types.Transaction, end chan struct{}, mProducer chan<- ExtractResult) {
 				//导出提出的交易
