@@ -123,7 +123,7 @@ func (bs *BtsBlockScanner) ScanBlockTask() {
 		maxBlockHeight := infoResp.HeadBlockNum
 
 		bs.wm.Log.Info("current block height:", currentHeight, " maxBlockHeight:", maxBlockHeight)
-		if uint64(currentHeight) == maxBlockHeight {
+		if uint64(currentHeight) == maxBlockHeight-1 {
 			bs.wm.Log.Std.Info("block scanner has scanned full chain data. Current height %d", maxBlockHeight)
 			break
 		}
@@ -258,14 +258,8 @@ func (bs *BtsBlockScanner) BatchExtractTransactions(blockHeight uint64, blockHas
 
 	//提取工作
 	extractWork := func(eblockHeight uint64, eBlockHash string, eBlockTime int64, mTransactions []types.Transaction, mtxIDs []string, eProducer chan ExtractResult) {
-		for idx, tx := range mTransactions {
+		for _, tx := range mTransactions {
 			bs.extractingCH <- struct{}{}
-			signedTransaction := txsigner.NewSignedTransaction(&tx)
-			txid, _ := signedTransaction.ID()
-			tx.TransactionID = txid
-			if len(txid) == 0 {
-				bs.wm.Log.Std.Debug("block: %s %s", eblockHeight, idx)
-			}
 
 			go func(mBlockHeight uint64, mTx *types.Transaction, end chan struct{}, mProducer chan<- ExtractResult) {
 				//导出提出的交易
@@ -341,9 +335,20 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 		return ExtractResult{Success: true}
 	}
 
+	signedTransaction := txsigner.NewSignedTransaction(transaction)
+	txID, err := signedTransaction.ID()
+	transaction.TransactionID = txID
+	if err != nil {
+		// bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
+	}
+
 	for _, operation := range transaction.Operations {
 
 		if transferOperation, ok := operation.(*types.TransferOperation); ok {
+
+			if err != nil || len(txID) == 0 {
+				bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
+			}
 
 			if scanTargetFunc == nil {
 				bs.wm.Log.Std.Error("scanTargetFunc is not configurated")
