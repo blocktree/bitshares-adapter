@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/blocktree/bitshares-adapter/txsigner"
@@ -388,7 +389,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 	token := operation.Amount.AssetID.String()
 	amount := common.NewString(operation.Amount.Amount).String()
 
-	contractID := openwallet.GenContractID(bs.wm.Symbol(), operation.Amount.AssetID.String())
+	contractID := openwallet.GenContractID(bs.wm.Symbol(), token)
 	coin := openwallet.Coin{
 		Symbol:     bs.wm.Symbol(),
 		IsContract: true,
@@ -398,7 +399,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 	coin.Contract = openwallet.SmartContract{
 		Symbol:     bs.wm.Symbol(),
 		ContractID: contractID,
-		Address:    operation.Amount.AssetID.String(),
+		Address:    token,
 		Token:      token,
 	}
 
@@ -416,6 +417,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		IsMemo:      true,
 		Status:      status,
 		Reason:      reason,
+		TxType:      0,
 	}
 
 	memo, _ := json.Marshal(operation.Memo)
@@ -435,6 +437,50 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 	}
 
 	txExtractDataArray = append(txExtractDataArray, txExtractData)
+
+	if operation.Fee.AssetID != operation.Amount.AssetID && optType != 2 {
+		fee := common.NewString(operation.Fee.Amount).String()
+		feeToken := operation.Fee.AssetID.String()
+
+		contractID := openwallet.GenContractID(bs.wm.Symbol(), feeToken)
+		feeCoin := openwallet.Coin{
+			Symbol:     bs.wm.Symbol(),
+			IsContract: true,
+			ContractID: contractID,
+		}
+
+		feeCoin.Contract = openwallet.SmartContract{
+			Symbol:     bs.wm.Symbol(),
+			ContractID: contractID,
+			Address:    feeToken,
+			Token:      feeToken,
+		}
+
+		feeTransx := &openwallet.Transaction{
+			Fees:        "0",
+			Coin:        feeCoin,
+			BlockHash:   result.BlockHash,
+			BlockHeight: result.BlockHeight,
+			TxID:        result.TxID,
+			// Decimal:     0,
+			Amount:      fee,
+			ConfirmTime: result.BlockTime,
+			From:        []string{operation.From.String() + ":" + fee},
+			IsMemo:      true,
+			Status:      status,
+			Reason:      reason,
+			TxType:      1,
+		}
+
+		wxID := openwallet.GenTransactionWxID(feeTransx)
+		feeTransx.WxID = wxID
+
+		feeExtractData := &openwallet.TxExtractData{Transaction: feeTransx}
+		bs.extractTxInput(operation, feeExtractData)
+
+		txExtractDataArray = append(txExtractDataArray, feeExtractData)
+	}
+
 	result.extractData[sourceKey] = txExtractDataArray
 }
 
@@ -459,6 +505,17 @@ func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, tx
 	txInput.Recharge.Index = 0 //账户模型填0
 	txInput.Recharge.CreateAt = time.Now().Unix()
 	txExtractData.TxInputs = append(txExtractData.TxInputs, txInput)
+
+	if tx.TxType == 0 && operation.Fee.Amount > 0 {
+		//手续费也作为一个输出s
+		fee := new(big.Int)
+		fee.SetUint64(operation.Fee.Amount)
+		tmp := *txInput
+		feeCharge := &tmp
+		feeCharge.Amount = fee.String()
+		txExtractData.TxInputs = append(txExtractData.TxInputs, feeCharge)
+	}
+
 }
 
 //extractTxOutput 提取交易单输入部分,只有一个TxOutPut
