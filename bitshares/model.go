@@ -110,15 +110,15 @@ func (block *BlockHeader) Marshal(encoder *encoding.Encoder) error {
 
 type Block struct {
 	Height                uint64
-	BlockID               string              `json:"block_id"`
-	TransactionMerkleRoot string              `json:"transaction_merkle_root"`
-	Previous              string              `json:"previous"`
-	Timestamp             types.Time          `json:"timestamp"`
-	Witness               string              `json:"witness"`
-	Extensions            []json.RawMessage   `json:"extensions"`
-	WitnessSignature      string              `json:"witness_signature"`
-	Transactions          []types.Transaction `json:"transactions"`
-	TransactionIDs        []string            `json:"transaction_ids"`
+	BlockID               string               `json:"block_id"`
+	TransactionMerkleRoot string               `json:"transaction_merkle_root"`
+	Previous              string               `json:"previous"`
+	Timestamp             types.Time           `json:"timestamp"`
+	Witness               string               `json:"witness"`
+	Extensions            []json.RawMessage    `json:"extensions"`
+	WitnessSignature      string               `json:"witness_signature"`
+	Transactions          []*types.Transaction `json:"transactions"`
+	TransactionIDs        []string             `json:"transaction_ids"`
 }
 
 func NewBlock(height uint32, result *gjson.Result) *Block {
