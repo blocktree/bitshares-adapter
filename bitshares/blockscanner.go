@@ -208,7 +208,7 @@ func (bs *BtsBlockScanner) newBlockNotify(block *Block) {
 }
 
 // BatchExtractTransactions 批量提取交易单
-func (bs *BtsBlockScanner) BatchExtractTransactions(blockHeight uint64, blockHash string, blockTime int64, transactions []types.Transaction, txIDs []string) error {
+func (bs *BtsBlockScanner) BatchExtractTransactions(blockHeight uint64, blockHash string, blockTime int64, transactions []*types.Transaction, txIDs []string) error {
 
 	var (
 		quit       = make(chan struct{})
@@ -257,7 +257,7 @@ func (bs *BtsBlockScanner) BatchExtractTransactions(blockHeight uint64, blockHas
 	}
 
 	//提取工作
-	extractWork := func(eblockHeight uint64, eBlockHash string, eBlockTime int64, mTransactions []types.Transaction, mtxIDs []string, eProducer chan ExtractResult) {
+	extractWork := func(eblockHeight uint64, eBlockHash string, eBlockTime int64, mTransactions []*types.Transaction, mtxIDs []string, eProducer chan ExtractResult) {
 		for _, tx := range mTransactions {
 			bs.extractingCH <- struct{}{}
 
@@ -267,7 +267,7 @@ func (bs *BtsBlockScanner) BatchExtractTransactions(blockHeight uint64, blockHas
 				//释放
 				<-end
 
-			}(eblockHeight, &tx, bs.extractingCH, eProducer)
+			}(eblockHeight, tx, bs.extractingCH, eProducer)
 		}
 	}
 	/*	开启导出的线程	*/
@@ -329,17 +329,18 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 			BlockTime:   blockTime,
 		}
 	)
-
-	if len(transaction.Operations) == 0 {
-		bs.wm.Log.Std.Debug("transaction does not have operation: %s", transaction.TransactionID)
-		return ExtractResult{Success: true}
-	}
+	bs.wm.Log.Std.Debug("transaction : %s", transaction.Signatures)
 
 	signedTransaction := txsigner.NewSignedTransaction(transaction)
 	txID, err := signedTransaction.ID()
 	transaction.TransactionID = txID
 	if err != nil {
 		// bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
+	}
+
+	if len(transaction.Operations) == 0 {
+		bs.wm.Log.Std.Debug("transaction does not have operation: %s", transaction.TransactionID)
+		return ExtractResult{Success: true}
 	}
 
 	for _, operation := range transaction.Operations {
@@ -509,15 +510,17 @@ func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, tx
 	txInput.Recharge.BlockHeight = tx.BlockHeight
 	txInput.Recharge.Index = 0 //账户模型填0
 	txInput.Recharge.CreateAt = time.Now().Unix()
+	txInput.Recharge.TxType = tx.TxType
 	txExtractData.TxInputs = append(txExtractData.TxInputs, txInput)
 
-	if tx.TxType == 0 && operation.Fee.Amount > 0 {
+	if tx.TxType == 0 && operation.Fee.Amount > 0 && operation.Fee.AssetID == operation.Amount.AssetID {
 		//手续费也作为一个输出s
 		fee := new(big.Int)
 		fee.SetUint64(operation.Fee.Amount)
 		tmp := *txInput
 		feeCharge := &tmp
 		feeCharge.Amount = fee.String()
+		feeCharge.TxType = 1
 		txExtractData.TxInputs = append(txExtractData.TxInputs, feeCharge)
 	}
 
