@@ -329,7 +329,6 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 			BlockTime:   blockTime,
 		}
 	)
-	bs.wm.Log.Std.Debug("transaction : %s", transaction.Signatures)
 
 	signedTransaction := txsigner.NewSignedTransaction(transaction)
 	txID, err := signedTransaction.ID()
