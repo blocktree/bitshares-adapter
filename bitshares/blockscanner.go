@@ -331,7 +331,7 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 	)
 
 	if len(transaction.Operations) == 0 {
-		bs.wm.Log.Std.Debug("transaction does not have operation: %s", transaction.TransactionID)
+		bs.wm.Log.Std.Debug("transaction does not have operation: (sig) %s", transaction.Signatures)
 		return ExtractResult{Success: true}
 	}
 
@@ -341,15 +341,12 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 
 			signedTransaction := txsigner.NewSignedTransaction(transaction)
 			txID, err := signedTransaction.ID()
-			transaction.TransactionID = txID
-			if err != nil {
-				// bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
-			}
-			bs.wm.Log.Std.Info("block: %v", txID)
+			bs.wm.Log.Std.Info("tx: %v", txID)
 
 			if err != nil || len(txID) == 0 {
-				bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
+				bs.wm.Log.Std.Error("block: %v (sig) %s \n%v", blockHeight, transaction.Signatures, err)
 			}
+			result.TxID = txID
 
 			if scanTargetFunc == nil {
 				bs.wm.Log.Std.Error("scanTargetFunc is not configurated")
