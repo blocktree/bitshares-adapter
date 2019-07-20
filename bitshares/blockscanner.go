@@ -330,13 +330,6 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 		}
 	)
 
-	signedTransaction := txsigner.NewSignedTransaction(transaction)
-	txID, err := signedTransaction.ID()
-	transaction.TransactionID = txID
-	if err != nil {
-		// bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
-	}
-
 	if len(transaction.Operations) == 0 {
 		bs.wm.Log.Std.Debug("transaction does not have operation: %s", transaction.TransactionID)
 		return ExtractResult{Success: true}
@@ -345,6 +338,14 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 	for _, operation := range transaction.Operations {
 
 		if transferOperation, ok := operation.(*types.TransferOperation); ok {
+
+			signedTransaction := txsigner.NewSignedTransaction(transaction)
+			txID, err := signedTransaction.ID()
+			transaction.TransactionID = txID
+			if err != nil {
+				// bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
+			}
+			bs.wm.Log.Std.Info("block: %v", txID)
 
 			if err != nil || len(txID) == 0 {
 				bs.wm.Log.Std.Error("block: %v \n%v", blockHeight, err)
