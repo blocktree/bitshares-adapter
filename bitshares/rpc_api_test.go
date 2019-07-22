@@ -3,6 +3,7 @@ package bitshares
 import (
 	"testing"
 
+	"github.com/blocktree/bitshares-adapter/types"
 	"github.com/blocktree/openwallet/log"
 )
 
@@ -30,5 +31,14 @@ func TestWalletClient_GetTransaction(t *testing.T) {
 		t.Errorf("GetTransaction failed unexpected error: %v\n", err)
 	} else {
 		log.Infof("GetTransaction info: %+v", tx)
+	}
+}
+
+func TestWalletClient_GetAssetsBalance(t *testing.T) {
+	balances, err := tw.Api.GetAssetsBalance(types.MustParseObjectID("1.2.814225"), types.MustParseObjectID("1.3.0"))
+	if err != nil {
+		t.Errorf("Balances failed unexpected error: %v\n", err)
+	} else {
+		log.Infof("Balances info: %+v", balances)
 	}
 }

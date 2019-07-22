@@ -20,6 +20,7 @@ type WalletClient struct {
 	client                 *req.Req
 }
 
+// NewWalletClient init a rpc client
 func NewWalletClient(walletAPI, explorerAPI string, debug bool) *WalletClient {
 
 	walletAPI = strings.TrimSuffix(walletAPI, "/")
@@ -172,4 +173,13 @@ func (c *WalletClient) GetTransaction(height uint32, trxInBlock int) (*types.Tra
 		return nil, fmt.Errorf("cannot find this transaction on the block: %v, %v", height, trxInBlock)
 	}
 	return NewTransaction(r, block.TransactionIDs[trxInBlock])
+}
+
+// GetAssetsBalance Returns information about the given account.
+func (c *WalletClient) GetAssetsBalance(account types.ObjectID, assets types.ObjectID) (*Balance, error) {
+	r, err := c.call("get_account_balances", []interface{}{account.String(), []interface{}{assets.String()}})
+	if err != nil {
+		return nil, err
+	}
+	return NewBalance(r), nil
 }

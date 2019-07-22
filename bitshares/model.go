@@ -220,3 +220,19 @@ func NewBlockchainInfo(result *gjson.Result) *BlockchainInfo {
 	obj.Timestamp, _ = time.ParseInLocation(TimeLayout, result.Get("time").String(), time.UTC)
 	return &obj
 }
+
+type Balance struct {
+	AssetID types.ObjectID `json:"asset_id"`
+	Amount  string         `json:"amount"`
+}
+
+func NewBalance(result *gjson.Result) *Balance {
+	arr := result.Array()
+	for _, item := range arr {
+		obj := Balance{}
+		obj.Amount = item.Get("amount").String()
+		obj.AssetID = types.MustParseObjectID(item.Get("asset_id").String())
+		return &obj
+	}
+	return nil
+}
