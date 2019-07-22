@@ -183,3 +183,20 @@ func (c *WalletClient) GetAssetsBalance(account types.ObjectID, assets types.Obj
 	}
 	return NewBalance(r), nil
 }
+
+// GetAssetsBalance Returns information about the given account.
+func (c *WalletClient) GetAccountID(name string) (*types.ObjectID, error) {
+	r, err := c.call("lookup_accounts", []interface{}{name, 1})
+	if err != nil {
+		return nil, err
+	}
+	arr := r.Array()
+	if len(arr) > 0 {
+		if arr[0].Array()[0].String() == name {
+			id := arr[0].Array()[1].String()
+			objectID := types.MustParseObjectID(id)
+			return &objectID, nil
+		}
+	}
+	return nil, fmt.Errorf("[%s] have not registered", name)
+}

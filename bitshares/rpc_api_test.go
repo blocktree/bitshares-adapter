@@ -42,3 +42,12 @@ func TestWalletClient_GetAssetsBalance(t *testing.T) {
 		log.Infof("Balances info: %+v", balances)
 	}
 }
+
+func TestWalletClient_GetAccountID(t *testing.T) {
+	id, err := tw.Api.GetAccountID("fajjoweiwew1")
+	if err != nil {
+		t.Errorf("AccountID failed unexpected error: %v\n", err)
+	} else {
+		log.Infof("AccountID info: %+v", id)
+	}
+}
