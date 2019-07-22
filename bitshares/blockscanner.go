@@ -36,7 +36,7 @@ const (
 	maxExtractingSize = 10 // thread count
 )
 
-//BtsBlockScanner EOS block scanner
+//BtsBlockScanner BTS block scanner
 type BtsBlockScanner struct {
 	*openwallet.BlockScannerBase
 

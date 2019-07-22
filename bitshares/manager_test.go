@@ -25,67 +25,7 @@ func init() {
 
 func testNewWalletManager() *WalletManager {
 	wm := NewWalletManager(nil)
-	wm.Config.ServerAPI = "http://127.0.0.1:8080/rpc"
+	wm.Config.ServerAPI = "http://api.bts.ai/rpc"
 	wm.Api = NewWalletClient(wm.Config.ServerAPI, "", false)
 	return wm
 }
-
-// func TestWalletManager_GetInfo(t *testing.T) {
-// 	wm := testNewWalletManager()
-// 	r, err := wm.Api.GetInfo()
-// 	if err != nil {
-// 		log.Errorf("unexpected error: %v", err)
-// 		return
-// 	}
-// 	log.Infof("%+v", r)
-// }
-
-// func TestWalletManager_GetAccount(t *testing.T) {
-// 	wm := testNewWalletManager()
-// 	r, err := wm.Api.GetAccount("eostesterkkk")
-// 	if err != nil {
-// 		log.Errorf("unexpected error: %v", err)
-// 		return
-// 	}
-// 	log.Infof("%+v", r)
-// }
-
-// func TestWalletManager_GetBlock(t *testing.T) {
-// 	wm := testNewWalletManager()
-// 	r, err := wm.Api.GetBlockByNum(1000000)
-// 	if err != nil {
-// 		log.Errorf("unexpected error: %v", err)
-// 		return
-// 	}
-// 	log.Infof("%+v", r)
-// }
-
-// func TestWalletManager_GetTransaction(t *testing.T) {
-// 	wm := testNewWalletManager()
-// 	r, err := wm.Api.GetTransaction("498db83f0358ff7a9e32215d924be4df3e84bf7fef1614e241fb764afe3ecd8d")
-// 	if err != nil {
-// 		log.Errorf("unexpected error: %v", err)
-// 		return
-// 	}
-// 	log.Infof("%+v", r)
-// }
-
-// func TestWalletManager_GetABI(t *testing.T) {
-// 	wm := testNewWalletManager()
-// 	r, err := wm.Api.GetABI("bitshares.token")
-// 	if err != nil {
-// 		log.Errorf("unexpected error: %v", err)
-// 		return
-// 	}
-// 	log.Infof("%+v", r)
-// }
-
-// func TestWalletManager_GetCurrencyBalance(t *testing.T) {
-// 	wm := testNewWalletManager()
-// 	r, err := wm.Api.GetCurrencyBalance("bob", "EOS", "bitshares.token")
-// 	if err != nil {
-// 		log.Errorf("unexpected error: %v", err)
-// 		return
-// 	}
-// 	log.Infof("%+v", r)
-// }
