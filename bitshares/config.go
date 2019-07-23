@@ -59,7 +59,7 @@ type WalletConfig struct {
 	//曲线类型
 	CurveType uint32
 	//链ID
-	//ChainID uint64
+	ChainID string
 	//数据目录
 	DataDir string
 }
@@ -86,6 +86,7 @@ func NewConfig(symbol string) *WalletConfig {
 	c.dbPath = filepath.Join("data", strings.ToLower(c.Symbol), "db")
 	//钱包服务API
 	c.ServerAPI = ""
+	c.ChainID = ""
 
 	//创建目录
 	//file.MkdirAll(c.dbPath)
