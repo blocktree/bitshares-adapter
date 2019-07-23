@@ -59,8 +59,10 @@ func TestSubscribeAddress_BTS(t *testing.T) {
 		endRunning = make(chan bool, 1)
 		symbol     = "BTS"
 		addrs      = map[string]string{
-			"1.2.814225": "sender",
-			"1.2.467903": "receiver",
+			"1.2.814225":  "sender",
+			"1.2.467903":  "receiver",
+			"1.2.1588722": "sender",
+			"1.2.374566":  "receiver",
 		}
 	)
 
@@ -96,7 +98,8 @@ func TestSubscribeAddress_BTS(t *testing.T) {
 
 	//log.Debug("already got scanner:", assetsMgr)
 	scanner := assetsMgr.GetBlockScanner()
-	scanner.SetRescanBlockHeight(39289425)
+	// scanner.SetRescanBlockHeight(39289425)
+	scanner.SetRescanBlockHeight(39349808)
 
 	if scanner == nil {
 		log.Error(symbol, "is not support block scan")
