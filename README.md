@@ -12,7 +12,7 @@ openwtester包下的测试用例已经集成了openwallet钱包体系，创建co
 
 #wallet api url
 ServerAPI = "https://localhost:8080"
-# Cache data file directory, default = "", current directory: ./data
-dataDir = ""
+# ChainID
+ChainID = ""
 
 ```
