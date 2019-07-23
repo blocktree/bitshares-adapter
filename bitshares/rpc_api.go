@@ -1,6 +1,7 @@
 package bitshares
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -199,4 +200,29 @@ func (c *WalletClient) GetAccountID(name string) (*types.ObjectID, error) {
 		}
 	}
 	return nil, fmt.Errorf("[%s] have not registered", name)
+}
+
+func (c *WalletClient) GetRequiredFee(ops []types.Operation, assetID string) ([]types.AssetAmount, error) {
+	var resp []types.AssetAmount
+
+	opsJSON := []interface{}{}
+	for _, o := range ops {
+		_, err := json.Marshal(o)
+		if err != nil {
+			return []types.AssetAmount{}, err
+		}
+
+		opArr := []interface{}{o.Type(), o}
+
+		opsJSON = append(opsJSON, opArr)
+	}
+	r, err := c.call("get_required_fees", []interface{}{opsJSON, assetID})
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(r.Raw), resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
