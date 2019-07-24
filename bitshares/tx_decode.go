@@ -92,7 +92,7 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 
 	accountBalanceDec, _ := decimal.NewFromString(balance.Amount)
 	amountDec, _ := decimal.NewFromString(amountStr)
-	amountDec = amountDec.Shift(int32(-precise))
+	amountDec = amountDec.Shift(int32(precise))
 
 	if accountBalanceDec.LessThan(amountDec) {
 		return fmt.Errorf("the balance: %s is not enough", amountStr)
