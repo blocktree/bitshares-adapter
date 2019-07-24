@@ -152,8 +152,10 @@ func (op *TransferOperation) Marshal(encoder *encoding.Encoder) error {
 	enc.Encode(op.From)
 	enc.Encode(op.To)
 	enc.Encode(op.Amount)
-	enc.Encode(op.Memo)
+	// enc.Encode(op.Memo)
 
+	//Memo?
+	// enc.EncodeUVarint(0)
 	//Extensions
 	enc.EncodeUVarint(0)
 	return enc.Err()

@@ -236,3 +236,11 @@ func NewBalance(result *gjson.Result) *Balance {
 	}
 	return nil
 }
+
+type BroadcastResponse struct {
+	ID       string                 `json:"id"`
+	BlockNum uint32                 `json:"block_num"`
+	TrxNum   uint32                 `json:"trx_num"`
+	Expired  bool                   `json:"expired"`
+	Trx      map[string]interface{} `json:"trx"`
+}
