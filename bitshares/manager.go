@@ -42,5 +42,6 @@ func NewWalletManager(cacheManager openwallet.ICacheManager) *WalletManager {
 	wm.TxDecoder = NewTransactionDecoder(&wm)
 	wm.Log = log.NewOWLogger(wm.Symbol())
 	wm.CacheManager = cacheManager
+	wm.ContractDecoder = NewContractDecoder(&wm)
 	return &wm
 }

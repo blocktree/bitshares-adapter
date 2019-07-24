@@ -177,8 +177,8 @@ func (c *WalletClient) GetTransaction(height uint32, trxInBlock int) (*types.Tra
 }
 
 // GetAssetsBalance Returns information about the given account.
-func (c *WalletClient) GetAssetsBalance(account types.ObjectID, assets types.ObjectID) (*Balance, error) {
-	r, err := c.call("get_account_balances", []interface{}{account.String(), []interface{}{assets.String()}})
+func (c *WalletClient) GetAssetsBalance(account types.ObjectID, asset types.ObjectID) (*Balance, error) {
+	r, err := c.call("get_account_balances", []interface{}{account.String(), []interface{}{asset.String()}})
 	if err != nil {
 		return nil, err
 	}
