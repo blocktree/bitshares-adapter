@@ -51,3 +51,12 @@ func TestWalletClient_GetAccountID(t *testing.T) {
 		log.Infof("AccountID info: %+v", id)
 	}
 }
+
+func TestWalletClient_GetAccounts(t *testing.T) {
+	id, err := tw.Api.GetAccounts([]string{"zbalice111"})
+	if err != nil {
+		t.Errorf("get Accounts failed unexpected error: %v\n", err)
+	} else {
+		log.Infof("get Accounts info: %+v", id)
+	}
+}

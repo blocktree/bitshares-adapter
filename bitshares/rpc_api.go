@@ -207,6 +207,19 @@ func (c *WalletClient) GetAccountID(name string) (*types.ObjectID, error) {
 	return nil, fmt.Errorf("[%s] have not registered", name)
 }
 
+// GetAssetsBalance Returns information about the given account.
+func (c *WalletClient) GetAccounts(names_or_ids []string) ([]*types.Account, error) {
+	var resp []*types.Account
+	r, err := c.call("get_accounts", []interface{}{names_or_ids}, false)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal([]byte(r.Raw), &resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (c *WalletClient) GetRequiredFee(ops []types.Operation, assetID string) ([]types.AssetAmount, error) {
 	var resp []types.AssetAmount
 
