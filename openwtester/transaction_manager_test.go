@@ -16,11 +16,7 @@
 package openwtester
 
 import (
-	"path/filepath"
 	"testing"
-
-	"github.com/astaxie/beego/config"
-	"github.com/blocktree/openwallet/openw"
 
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/openwallet"
@@ -37,51 +33,6 @@ func TestWalletManager_GetTransactions(t *testing.T) {
 		log.Info("trx[", i, "] :", tx)
 	}
 	log.Info("trx count:", len(list))
-}
-
-func TestWalletManager_GetTxUnspent(t *testing.T) {
-	tm := testInitWalletManager()
-	list, err := tm.GetTxUnspent(testApp, 0, -1, "Received", false)
-	if err != nil {
-		log.Error("GetTxUnspent failed, unexpected error:", err)
-		return
-	}
-	for i, tx := range list {
-		log.Info("Unspent[", i, "] :", tx)
-	}
-	log.Info("Unspent count:", len(list))
-}
-
-func TestWalletManager_GetTxSpent(t *testing.T) {
-	tm := testInitWalletManager()
-	list, err := tm.GetTxSpent(testApp, 0, -1, "Received", false)
-	if err != nil {
-		log.Error("GetTxSpent failed, unexpected error:", err)
-		return
-	}
-	for i, tx := range list {
-		log.Info("Spent[", i, "] :", tx)
-	}
-	log.Info("Spent count:", len(list))
-}
-
-func TestWalletManager_ExtractUTXO(t *testing.T) {
-	tm := testInitWalletManager()
-	unspent, err := tm.GetTxUnspent(testApp, 0, -1, "Received", false)
-	if err != nil {
-		log.Error("GetTxUnspent failed, unexpected error:", err)
-		return
-	}
-	for i, tx := range unspent {
-
-		_, err := tm.GetTxSpent(testApp, 0, -1, "SourceTxID", tx.TxID, "SourceIndex", tx.Index)
-		if err == nil {
-			continue
-		}
-
-		log.Info("ExtractUTXO[", i, "] :", tx)
-	}
-
 }
 
 func TestWalletManager_GetTransactionByWxID(t *testing.T) {
@@ -151,42 +102,4 @@ func TestWalletManager_GetEstimateFeeRate(t *testing.T) {
 		return
 	}
 	log.Std.Info("feeRate: %s %s/%s", feeRate, coin.Symbol, unit)
-}
-
-func TestGetAddressBalance(t *testing.T) {
-	symbol := "VSYS"
-	assetsMgr, err := openw.GetAssetsAdapter(symbol)
-	if err != nil {
-		log.Error(symbol, "is not support")
-		return
-	}
-	//读取配置
-	absFile := filepath.Join(configFilePath, symbol+".ini")
-
-	c, err := config.NewConfig("ini", absFile)
-	if err != nil {
-		return
-	}
-	assetsMgr.LoadAssetsConfig(c)
-	bs := assetsMgr.GetBlockScanner()
-
-	addrs := []string{
-		"AR5D3fGVWDz32wWCnVbwstsMW8fKtWdzNFT",
-		"AR9qbgbsmLh3ADSU9ngR22J2HpD5D9ncTCg",
-		"ARAA8AnUYa4kWwWkiZTTyztG5C6S9MFTx11",
-		"ARCUYWyLvGDTrhZ6K9jjMh9B5iRVEf3vRzs",
-		"ARGehumz77nGcfkQrPjK4WUyNevvU9NCNqQ",
-		"ARJdaB9Fo6Sk2nxBrQP2p4woWotPxjaebCv",
-	}
-
-	balances, err := bs.GetBalanceByAddress(addrs...)
-	if err != nil {
-		log.Errorf(err.Error())
-		return
-	}
-	for _, b := range balances {
-		log.Infof("balance[%s] = %s", b.Address, b.Balance)
-		log.Infof("UnconfirmBalance[%s] = %s", b.Address, b.UnconfirmBalance)
-		log.Infof("ConfirmBalance[%s] = %s", b.Address, b.ConfirmBalance)
-	}
 }
