@@ -18,6 +18,7 @@ package bitshares
 import (
 	"github.com/blocktree/bitshares-adapter/types"
 	"github.com/blocktree/openwallet/openwallet"
+	"github.com/shopspring/decimal"
 )
 
 type ContractDecoder struct {
@@ -32,6 +33,7 @@ func NewContractDecoder(wm *WalletManager) *ContractDecoder {
 	return &decoder
 }
 
+// GetTokenBalanceByAddress return the balance by account alias, queried by rpc
 func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.SmartContract, address ...string) ([]*openwallet.TokenBalance, error) {
 
 	var (
@@ -51,13 +53,16 @@ func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.Sma
 			decoder.wm.Log.Errorf("get account[%v] token balance failed, err: %v", addr, err)
 		}
 
+		balanceDec, _ := decimal.NewFromString(balance.Amount)
+		balanceDec = balanceDec.Shift(int32(contract.Decimals))
+
 		tokenBalance := &openwallet.TokenBalance{
 			Contract: &contract,
 			Balance: &openwallet.Balance{
 				Address:          addr,
 				Symbol:           contract.Symbol,
-				Balance:          balance.Amount,
-				ConfirmBalance:   balance.Amount,
+				Balance:          balanceDec.String(),
+				ConfirmBalance:   balanceDec.String(),
 				UnconfirmBalance: "0",
 			},
 		}
