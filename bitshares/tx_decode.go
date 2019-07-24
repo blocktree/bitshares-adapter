@@ -16,6 +16,8 @@
 package bitshares
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -72,20 +74,17 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 		break
 	}
 
-	// 检查转出账户是否存在
-	fromAccountID, err := decoder.wm.Api.GetAccountID(account.Alias)
+	// 检查转出、目标账户是否存在
+	accounts, err := decoder.wm.Api.GetAccounts([]string{account.Alias, to})
 	if err != nil {
-		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "[%s] have not registered", account.Alias)
+		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "accounts have not registered [%v] ", err)
 	}
 
-	// 检查目标账户是否存在
-	toAccountID, err := decoder.wm.Api.GetAccountID(to)
-	if err != nil {
-		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "[%s] have not registered", to)
-	}
+	fromAccount := accounts[0]
+	toAccount := accounts[1]
 
 	// 检查转出账户余额
-	balance, err := decoder.wm.Api.GetAssetsBalance(*fromAccountID, assetID)
+	balance, err := decoder.wm.Api.GetAssetsBalance(fromAccount.ID, assetID)
 	if err != nil || balance == nil {
 		return openwallet.Errorf(openwallet.ErrInsufficientBalanceOfAccount, "all address's balance of account is not enough")
 	}
@@ -109,13 +108,19 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 		Amount:  0,
 	}
 
-	op := types.NewTransferOperation(*fromAccountID, *toAccountID, amount, fee)
+	op := types.NewTransferOperation(fromAccount.ID, toAccount.ID, amount, fee)
+	op.Memo = types.Memo{
+		From:    fromAccount.Options.MemoKey,
+		To:      toAccount.Options.MemoKey,
+		Nonce:   GenerateNonce(),
+		Message: memo,
+	}
 	ops := &types.Operations{op}
 
 	createTxErr := decoder.createRawTransaction(
 		wrapper,
 		rawTx,
-		fromAccountID.String(),
+		fromAccount.ID.String(),
 		ops,
 		memo)
 	if createTxErr != nil {
@@ -503,4 +508,16 @@ func (decoder *TransactionDecoder) createRawTransaction(
 	rawTx.TxTo = txTo
 
 	return nil
+}
+
+// GenerateNonce Generate Nonce
+func GenerateNonce() string {
+	buf := make([]byte, 16)
+	_, err := rand.Read(buf)
+	if err != nil {
+		return ""
+	}
+
+	nonce := base64.StdEncoding.EncodeToString(buf)
+	return nonce
 }
