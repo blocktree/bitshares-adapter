@@ -54,6 +54,7 @@ type WalletConfig struct {
 	dbPath string
 	//钱包服务API
 	ServerAPI string
+	WalletAPI string
 	//默认配置内容
 	DefaultConfig string
 	//曲线类型
@@ -86,6 +87,7 @@ func NewConfig(symbol string) *WalletConfig {
 	c.dbPath = filepath.Join("data", strings.ToLower(c.Symbol), "db")
 	//钱包服务API
 	c.ServerAPI = ""
+	c.WalletAPI = ""
 	c.ChainID = ""
 
 	//创建目录

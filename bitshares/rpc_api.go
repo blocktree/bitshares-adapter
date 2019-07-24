@@ -16,20 +16,20 @@ import (
 // request and responses. A Client must be configured with a secret token
 // to authenticate with other Cores on the network.
 type WalletClient struct {
-	WalletAPI, ExplorerAPI string
-	Debug                  bool
-	client                 *req.Req
+	WalletAPI, ServerAPI string
+	Debug                bool
+	client               *req.Req
 }
 
 // NewWalletClient init a rpc client
-func NewWalletClient(walletAPI, explorerAPI string, debug bool) *WalletClient {
+func NewWalletClient(serverAPI, walletAPI string, debug bool) *WalletClient {
 
 	walletAPI = strings.TrimSuffix(walletAPI, "/")
-	explorerAPI = strings.TrimSuffix(explorerAPI, "/")
+	serverAPI = strings.TrimSuffix(serverAPI, "/")
 	c := WalletClient{
-		WalletAPI:   walletAPI,
-		ExplorerAPI: explorerAPI,
-		Debug:       debug,
+		WalletAPI: walletAPI,
+		ServerAPI: serverAPI,
+		Debug:     debug,
 	}
 
 	api := req.New()
@@ -39,7 +39,7 @@ func NewWalletClient(walletAPI, explorerAPI string, debug bool) *WalletClient {
 }
 
 // Call calls a remote procedure on another node, specified by the path.
-func (c *WalletClient) call(method string, request interface{}) (*gjson.Result, error) {
+func (c *WalletClient) call(method string, request interface{}, queryWalletAPI bool) (*gjson.Result, error) {
 
 	var (
 		body = make(map[string]interface{}, 0)
@@ -64,7 +64,12 @@ func (c *WalletClient) call(method string, request interface{}) (*gjson.Result, 
 		log.Std.Info("Start Request API...")
 	}
 
-	r, err := c.client.Post(c.WalletAPI, req.BodyJSON(&body), authHeader)
+	host := c.ServerAPI
+	if queryWalletAPI {
+		host = c.WalletAPI
+	}
+
+	r, err := c.client.Post(host, req.BodyJSON(&body), authHeader)
 
 	if c.Debug {
 		log.Std.Info("Request API Completed")
@@ -114,7 +119,7 @@ func (c *WalletClient) isError(r *req.Resp) error {
 
 // GetObjects return a block by the given block number
 func (c *WalletClient) GetObjects(assets ...types.ObjectID) (*gjson.Result, error) {
-	resp, err := c.call("get_objects", []interface{}{objectsToParams(assets)})
+	resp, err := c.call("get_objects", []interface{}{objectsToParams(assets)}, false)
 	return resp, err
 }
 
@@ -128,7 +133,7 @@ func objectsToParams(objs []types.ObjectID) []string {
 
 // GetBlockchainInfo returns current blockchain data
 func (c *WalletClient) GetBlockchainInfo() (*BlockchainInfo, error) {
-	r, err := c.call("get_dynamic_global_properties", []interface{}{})
+	r, err := c.call("get_dynamic_global_properties", []interface{}{}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -138,13 +143,13 @@ func (c *WalletClient) GetBlockchainInfo() (*BlockchainInfo, error) {
 
 // GetBlockByHeight returns a certain block
 func (c *WalletClient) GetBlockByHeight(height uint32) (*Block, error) {
-	r, err := c.call("get_block_header", []interface{}{height + 1})
+	r, err := c.call("get_block_header", []interface{}{height + 1}, false)
 	if err != nil {
 		return nil, err
 	}
 	header := NewBlockHeader(r)
 
-	r, err = c.call("get_block", []interface{}{height})
+	r, err = c.call("get_block", []interface{}{height}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +164,7 @@ func (c *WalletClient) GetBlockByHeight(height uint32) (*Block, error) {
 
 // GetTransaction returns the TX
 func (c *WalletClient) GetTransaction(height uint32, trxInBlock int) (*types.Transaction, error) {
-	r, err := c.call("get_transaction", []interface{}{height, trxInBlock})
+	r, err := c.call("get_transaction", []interface{}{height, trxInBlock}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +183,7 @@ func (c *WalletClient) GetTransaction(height uint32, trxInBlock int) (*types.Tra
 
 // GetAssetsBalance Returns information about the given account.
 func (c *WalletClient) GetAssetsBalance(account types.ObjectID, asset types.ObjectID) (*Balance, error) {
-	r, err := c.call("get_account_balances", []interface{}{account.String(), []interface{}{asset.String()}})
+	r, err := c.call("get_account_balances", []interface{}{account.String(), []interface{}{asset.String()}}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +192,7 @@ func (c *WalletClient) GetAssetsBalance(account types.ObjectID, asset types.Obje
 
 // GetAssetsBalance Returns information about the given account.
 func (c *WalletClient) GetAccountID(name string) (*types.ObjectID, error) {
-	r, err := c.call("lookup_accounts", []interface{}{name, 1})
+	r, err := c.call("lookup_accounts", []interface{}{name, 1}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +221,7 @@ func (c *WalletClient) GetRequiredFee(ops []types.Operation, assetID string) ([]
 
 		opsJSON = append(opsJSON, opArr)
 	}
-	r, err := c.call("get_required_fees", []interface{}{opsJSON, assetID})
+	r, err := c.call("get_required_fees", []interface{}{opsJSON, assetID}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +236,7 @@ func (c *WalletClient) GetRequiredFee(ops []types.Operation, assetID string) ([]
 func (c *WalletClient) BroadcastTransaction(tx *types.Transaction) (*BroadcastResponse, error) {
 	resp := BroadcastResponse{}
 
-	r, err := c.call("broadcast_transaction", []interface{}{tx})
+	r, err := c.call("broadcast_transaction", []interface{}{tx}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -239,4 +244,13 @@ func (c *WalletClient) BroadcastTransaction(tx *types.Transaction) (*BroadcastRe
 		return nil, err
 	}
 	return &resp, err
+}
+
+// GetTransactionID return the TX ID
+func (c *WalletClient) GetTransactionID(tx *types.Transaction) (string, error) {
+	r, err := c.call("get_transaction_id", []interface{}{tx}, true)
+	if err != nil {
+		return "", err
+	}
+	return r.String(), err
 }

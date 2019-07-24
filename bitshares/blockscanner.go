@@ -22,7 +22,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/blocktree/bitshares-adapter/txsigner"
 	"github.com/blocktree/bitshares-adapter/types"
 
 	"github.com/blocktree/openwallet/common"
@@ -339,8 +338,7 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 
 		if transferOperation, ok := operation.(*types.TransferOperation); ok {
 
-			signedTransaction := txsigner.NewSignedTransaction(transaction)
-			txID, err := signedTransaction.ID()
+			txID, err := bs.wm.Api.GetTransactionID(transaction)
 			bs.wm.Log.Std.Info("tx: %v", txID)
 
 			if err != nil || len(txID) == 0 {

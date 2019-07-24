@@ -36,7 +36,7 @@ type WalletManager struct {
 func NewWalletManager(cacheManager openwallet.ICacheManager) *WalletManager {
 	wm := WalletManager{}
 	wm.Config = NewConfig(Symbol)
-	wm.Api = NewWalletClient(wm.Config.ServerAPI, "", false)
+	wm.Api = NewWalletClient(wm.Config.ServerAPI, wm.Config.WalletAPI, false)
 	wm.Blockscanner = NewBlockScanner(&wm)
 	wm.Decoder = NewAddressDecoder(&wm)
 	wm.TxDecoder = NewTransactionDecoder(&wm)
