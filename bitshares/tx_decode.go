@@ -119,6 +119,7 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 	createTxErr := decoder.createRawTransaction(
 		wrapper,
 		rawTx,
+		&accountBalanceDec,
 		account.Alias,
 		ops,
 		memo)
@@ -393,6 +394,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 func (decoder *TransactionDecoder) createRawTransaction(
 	wrapper openwallet.WalletDAI,
 	rawTx *openwallet.RawTransaction,
+	balanceDec *decimal.Decimal,
 	from string,
 	operations *types.Operations,
 	memo string) *openwallet.Error {
@@ -408,6 +410,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		chainID          = decoder.wm.Config.ChainID
 		curveType        = decoder.wm.Config.CurveType
 		assetID          = types.MustParseObjectID(rawTx.Coin.Contract.Address)
+		precise          = rawTx.Coin.Contract.Decimals
 	)
 
 	for k, v := range rawTx.To {
@@ -443,11 +446,17 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "can't get fees")
 	}
 
+	feesDec := decimal.Zero
 	for idx, op := range *operations {
 		if top, ok := op.(*types.TransferOperation); ok {
+			feesDec = feesDec.Add(decimal.New(int64(fees[idx].Amount), 0))
 			top.Fee.Amount = fees[idx].Amount
 		}
 		stx.PushOperation(op)
+	}
+
+	if balanceDec.LessThan(amountDec.Add(feesDec)) {
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "the balance: %s is not enough", balanceDec.Shift(-int32(precise)))
 	}
 
 	//交易哈希
