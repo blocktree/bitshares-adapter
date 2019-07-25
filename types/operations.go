@@ -122,7 +122,7 @@ type TransferOperation struct {
 	To         ObjectID          `json:"to"`
 	Amount     AssetAmount       `json:"amount"`
 	Fee        AssetAmount       `json:"fee"`
-	Memo       Memo              `json:"memo"`
+	Memo       *interface{}      `json:"memo"`
 	Extensions []json.RawMessage `json:"extensions"`
 }
 

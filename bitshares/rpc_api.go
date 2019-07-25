@@ -238,7 +238,7 @@ func (c *WalletClient) GetRequiredFee(ops []types.Operation, assetID string) ([]
 	if err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(r.Raw), resp); err != nil {
+	if err := json.Unmarshal([]byte(r.Raw), &resp); err != nil {
 		return nil, err
 	}
 

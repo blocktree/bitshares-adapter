@@ -16,11 +16,10 @@
 package bitshares
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/blocktree/bitshares-adapter/txsigner"
@@ -109,18 +108,18 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 	}
 
 	op := types.NewTransferOperation(fromAccount.ID, toAccount.ID, amount, fee)
-	op.Memo = types.Memo{
-		From:    fromAccount.Options.MemoKey,
-		To:      toAccount.Options.MemoKey,
-		Nonce:   GenerateNonce(),
-		Message: memo,
-	}
+	// op.Memo = types.Memo{
+	// From:    fromAccount.Options.MemoKey,
+	// To:      toAccount.Options.MemoKey,
+	// Nonce:   GenerateNonce(),
+	// Message: memo,
+	// }
 	ops := &types.Operations{op}
 
 	createTxErr := decoder.createRawTransaction(
 		wrapper,
 		rawTx,
-		fromAccount.ID.String(),
+		account.Alias,
 		ops,
 		memo)
 	if createTxErr != nil {
@@ -222,13 +221,9 @@ func (decoder *TransactionDecoder) VerifyRawTransaction(wrapper openwallet.Walle
 		}
 	}
 
-	bin, err := stx.Serialize()
-	if err != nil {
-		return fmt.Errorf("signed transaction encode failed, unexpected error: %v", err)
-	}
-
 	rawTx.IsCompleted = true
-	rawTx.RawHex = hex.EncodeToString(bin)
+	jsonTx, _ := json.Marshal(stx)
+	rawTx.RawHex = hex.EncodeToString(jsonTx)
 
 	return nil
 }
@@ -398,7 +393,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 func (decoder *TransactionDecoder) createRawTransaction(
 	wrapper openwallet.WalletDAI,
 	rawTx *openwallet.RawTransaction,
-	fromAccountID string,
+	from string,
 	operations *types.Operations,
 	memo string) *openwallet.Error {
 
@@ -460,10 +455,6 @@ func (decoder *TransactionDecoder) createRawTransaction(
 	if err != nil {
 		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "Calculate digest error: %v", err)
 	}
-	serializedTx, err := stx.Serialize()
-	if err != nil {
-		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "Serialize tx error: %v", err)
-	}
 
 	addresses, err := wrapper.GetAddressList(0, -1,
 		"AccountID", accountID)
@@ -486,19 +477,20 @@ func (decoder *TransactionDecoder) createRawTransaction(
 	}
 
 	//计算账户的实际转账amount
-	if fromAccountID != to {
+	if from != to {
 		accountTotalSent = accountTotalSent.Add(amountDec)
 	}
 	accountTotalSent = decimal.Zero.Sub(accountTotalSent)
 
-	txFrom = []string{fmt.Sprintf("%s:%s", fromAccountID, amountDec.String())}
+	txFrom = []string{fmt.Sprintf("%s:%s", from, amountDec.String())}
 	txTo = []string{fmt.Sprintf("%s:%s", to, amountDec.String())}
 
 	if rawTx.Signatures == nil {
 		rawTx.Signatures = make(map[string][]*openwallet.KeySignature)
 	}
 
-	rawTx.RawHex = hex.EncodeToString(serializedTx)
+	jsonTx, _ := json.Marshal(stx)
+	rawTx.RawHex = hex.EncodeToString(jsonTx)
 	rawTx.Signatures[rawTx.Account.AccountID] = keySignList
 	rawTx.FeeRate = "0"
 	rawTx.Fees = "0"
@@ -512,12 +504,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 
 // GenerateNonce Generate Nonce
 func GenerateNonce() string {
-	buf := make([]byte, 16)
-	_, err := rand.Read(buf)
-	if err != nil {
-		return ""
-	}
-
-	nonce := base64.StdEncoding.EncodeToString(buf)
-	return nonce
+	rand.Seed(time.Now().UnixNano())
+	nonce := rand.Intn(10000000000000000)
+	return fmt.Sprintf("%v", nonce)
 }
