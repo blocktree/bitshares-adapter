@@ -249,7 +249,7 @@ func (c *WalletClient) GetRequiredFee(ops []types.Operation, assetID string) ([]
 func (c *WalletClient) BroadcastTransaction(tx *types.Transaction) (*BroadcastResponse, error) {
 	resp := BroadcastResponse{}
 
-	r, err := c.call("broadcast_transaction", []interface{}{tx}, false)
+	r, err := c.call("broadcast_transaction", []interface{}{tx}, true)
 	if err != nil {
 		return nil, err
 	}
