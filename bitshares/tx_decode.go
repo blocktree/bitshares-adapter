@@ -153,7 +153,6 @@ func (decoder *TransactionDecoder) SignRawTransaction(wrapper openwallet.WalletD
 			if err != nil {
 				return err
 			}
-			decoder.wm.Log.Debug("privateKey:", hex.EncodeToString(keyBytes))
 
 			hash, err := hex.DecodeString(keySignature.Message)
 			if err != nil {
