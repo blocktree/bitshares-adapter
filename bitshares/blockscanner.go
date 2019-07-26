@@ -339,7 +339,7 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 		if transferOperation, ok := operation.(*types.TransferOperation); ok {
 
 			txID, err := bs.wm.Api.GetTransactionID(transaction)
-			bs.wm.Log.Std.Info("tx: %v", txID)
+			bs.wm.Log.Std.Debug("tx: %v", txID)
 
 			if err != nil || len(txID) == 0 {
 				bs.wm.Log.Std.Error("block: %v (sig) %s \n%v", blockHeight, transaction.Signatures, err)
