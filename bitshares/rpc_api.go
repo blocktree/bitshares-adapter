@@ -253,8 +253,12 @@ func (c *WalletClient) BroadcastTransaction(tx *types.Transaction) (*BroadcastRe
 	if err != nil {
 		return nil, err
 	}
-	if err := json.Unmarshal([]byte(r.Raw), resp); err != nil {
+	data := []interface{}{}
+	if err := json.Unmarshal([]byte(r.Raw), &data); err != nil {
 		return nil, err
+	}
+	if len(data) == 2 {
+		resp.ID = data[0].(string)
 	}
 	return &resp, err
 }
