@@ -27,7 +27,7 @@ type AddressDecoderV2 struct {
 }
 
 // AddressDecode decode address
-func (dec *AddressDecoderV2) AddressDecode(pubKey string) ([]byte, error) {
+func (dec *AddressDecoderV2) AddressDecode(pubKey string, opts ...interface{}) ([]byte, error) {
 
 	var pubKeyMaterial string
 	if strings.HasPrefix(pubKey, BTSPublicKeyR1Prefix) {
@@ -52,7 +52,7 @@ func (dec *AddressDecoderV2) AddressDecode(pubKey string) ([]byte, error) {
 }
 
 // AddressEncode encode address
-func (dec *AddressDecoderV2) AddressEncode(hash []byte) string {
+func (dec *AddressDecoderV2) AddressEncode(hash []byte, opts ...interface{}) (string, error) {
 	data := addressEncoder.CatData(hash, addressEncoder.CalcChecksum(hash, BTS_mainnetPublic.ChecksumType))
-	return string(BTS_mainnetPublic.Prefix) + addressEncoder.EncodeData(data, "base58", BTS_mainnetPublic.Alphabet)
+	return string(BTS_mainnetPublic.Prefix) + addressEncoder.EncodeData(data, "base58", BTS_mainnetPublic.Alphabet), nil
 }
