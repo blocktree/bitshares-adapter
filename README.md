@@ -14,5 +14,7 @@ openwtester包下的测试用例已经集成了openwallet钱包体系，创建co
 ServerAPI = "https://localhost:8080"
 # ChainID
 ChainID = ""
+# MemoPrivateKey
+MemoPrivateKey = ""
 
 ```
