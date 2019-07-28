@@ -37,8 +37,8 @@ func (decoder *addressDecoder) PrivateKeyToWIF(priv []byte, isTestnet bool) (str
 
 //PublicKeyToAddress 公钥转地址
 func (decoder *addressDecoder) PublicKeyToAddress(pub []byte, isTestnet bool) (string, error) {
-	address := addrdec.Default.AddressEncode(pub)
-	return address, nil
+	address, err := addrdec.Default.AddressEncode(pub)
+	return address, err
 }
 
 //RedeemScriptToAddress 多重签名赎回脚本转地址

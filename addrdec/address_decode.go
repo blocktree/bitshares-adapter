@@ -26,6 +26,12 @@ type AddressDecoderV2 struct {
 	IsTestNet bool
 }
 
+//NewAddressDecoder 地址解析器
+func NewAddressDecoderV2() *AddressDecoderV2 {
+	decoder := AddressDecoderV2{}
+	return &decoder
+}
+
 // AddressDecode decode address
 func (dec *AddressDecoderV2) AddressDecode(pubKey string, opts ...interface{}) ([]byte, error) {
 
