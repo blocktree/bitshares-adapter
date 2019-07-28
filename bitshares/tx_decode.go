@@ -22,6 +22,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/blocktree/bitshares-adapter/encoding"
 	"github.com/blocktree/bitshares-adapter/txsigner"
 	"github.com/blocktree/bitshares-adapter/types"
 
@@ -106,14 +107,16 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 		AssetID: assetID,
 		Amount:  0,
 	}
+	memo_from_priv, _ := hex.DecodeString(decoder.wm.Config.MemoPrivateKey)
+	memo_to_pub, _ := decoder.wm.DecoderV2.AddressDecode(toAccount.Options.MemoKey)
 
 	op := types.NewTransferOperation(fromAccount.ID, toAccount.ID, amount, fee)
-	// op.Memo = types.Memo{
-	// From:    fromAccount.Options.MemoKey,
-	// To:      toAccount.Options.MemoKey,
-	// Nonce:   GenerateNonce(),
-	// Message: memo,
-	// }
+	op.Memo = types.Memo{
+		From:    fromAccount.Options.MemoKey,
+		To:      toAccount.Options.MemoKey,
+		Nonce:   GenerateNonce(),
+		Message: encoding.SetMemoMessage(memo_from_priv, memo_to_pub, memo),
+	}
 	ops := &types.Operations{op}
 
 	createTxErr := decoder.createRawTransaction(

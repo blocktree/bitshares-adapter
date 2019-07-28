@@ -122,7 +122,7 @@ type TransferOperation struct {
 	To         ObjectID          `json:"to"`
 	Amount     AssetAmount       `json:"amount"`
 	Fee        AssetAmount       `json:"fee"`
-	Memo       *interface{}      `json:"memo"`
+	Memo       Memo              `json:"memo"`
 	Extensions []json.RawMessage `json:"extensions"`
 }
 
@@ -152,10 +152,10 @@ func (op *TransferOperation) Marshal(encoder *encoding.Encoder) error {
 	enc.Encode(op.From)
 	enc.Encode(op.To)
 	enc.Encode(op.Amount)
-	// enc.Encode(op.Memo)
+	enc.Encode(op.Memo)
 
 	//Memo?
-	enc.EncodeUVarint(0)
+	// enc.EncodeUVarint(0)
 	//Extensions
 	enc.EncodeUVarint(0)
 	return enc.Err()
