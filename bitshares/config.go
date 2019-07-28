@@ -62,7 +62,8 @@ type WalletConfig struct {
 	//链ID
 	ChainID string
 	//数据目录
-	DataDir string
+	DataDir        string
+	MemoPrivateKey string
 }
 
 func NewConfig(symbol string) *WalletConfig {
@@ -89,6 +90,7 @@ func NewConfig(symbol string) *WalletConfig {
 	c.ServerAPI = ""
 	c.WalletAPI = ""
 	c.ChainID = ""
+	c.MemoPrivateKey = ""
 
 	//创建目录
 	//file.MkdirAll(c.dbPath)
