@@ -504,7 +504,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 	rawTx.RawHex = hex.EncodeToString(jsonTx)
 	rawTx.Signatures[rawTx.Account.AccountID] = keySignList
 	rawTx.FeeRate = "0"
-	rawTx.Fees = "0"
+	rawTx.Fees = feesDec.String()
 	rawTx.IsBuilt = true
 	rawTx.TxAmount = accountTotalSent.String()
 	rawTx.TxFrom = txFrom
