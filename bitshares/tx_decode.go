@@ -301,96 +301,116 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransaction(wrapper openwalle
 	return rawTxArray, nil
 }
 
-// //CreateSummaryRawTransactionWithError 创建汇总交易
-// func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper openwallet.WalletDAI, sumRawTx *openwallet.SummaryRawTransaction) ([]*openwallet.RawTransactionWithError, error) {
+//CreateSummaryRawTransactionWithError 创建汇总交易
+func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper openwallet.WalletDAI, sumRawTx *openwallet.SummaryRawTransaction) ([]*openwallet.RawTransactionWithError, error) {
 
-// 	var (
-// 		rawTxArray     = make([]*openwallet.RawTransactionWithError, 0)
-// 		accountID      = sumRawTx.Account.AccountID
-// 		accountBalance bts.Asset
-// 		codeAccount    string
-// 		tokenCoin      string
-// 	)
+	var (
+		rawTxArray = make([]*openwallet.RawTransactionWithError, 0)
+		accountID  = sumRawTx.Account.AccountID
+		assetID    types.ObjectID
+		precise    uint64
+	)
 
-// 	minTransfer, _ := decimal.NewFromString(sumRawTx.MinTransfer)
-// 	retainedBalance, _ := decimal.NewFromString(sumRawTx.RetainedBalance)
+	assetID = types.MustParseObjectID(sumRawTx.Coin.Contract.Address)
+	precise = sumRawTx.Coin.Contract.Decimals
 
-// 	addr := strings.Split(sumRawTx.Coin.Contract.Address, ":")
-// 	if len(addr) != 2 {
-// 		return nil, fmt.Errorf("token contract's address is invalid: %s", sumRawTx.Coin.Contract.Address)
-// 	}
-// 	codeAccount = addr[0]
-// 	tokenCoin = strings.ToUpper(addr[1])
+	minTransfer, _ := decimal.NewFromString(sumRawTx.MinTransfer)
+	retainedBalance, _ := decimal.NewFromString(sumRawTx.RetainedBalance)
 
-// 	if minTransfer.LessThan(retainedBalance) {
-// 		return nil, fmt.Errorf("mini transfer amount must be greater than address retained balance")
-// 	}
+	if minTransfer.LessThan(retainedBalance) {
+		return nil, fmt.Errorf("mini transfer amount must be greater than address retained balance")
+	}
 
-// 	//获取wallet
-// 	account, err := wrapper.GetAssetsAccountInfo(accountID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	//获取wallet
+	account, err := wrapper.GetAssetsAccountInfo(accountID)
+	if err != nil {
+		return nil, err
+	}
 
-// 	if account.Alias == "" {
-// 		return nil, fmt.Errorf("[%s] have not been created", accountID)
-// 	}
+	if account.Alias == "" {
+		return nil, fmt.Errorf("[%s] have not been created", accountID)
+	}
 
-// 	// 检查目标账户是否存在
-// 	accountTo, err := decoder.wm.Api.GetAssetsBalance(bts.AccountName(sumRawTx.SummaryAddress))
-// 	if err != nil && accountTo == nil {
-// 		return nil, fmt.Errorf("%s account of to not found on chain", decoder.wm.Symbol())
-// 	}
+	// 检查转出、目标账户是否存在
+	accounts, err := decoder.wm.Api.GetAccounts([]string{account.Alias, sumRawTx.SummaryAddress})
+	if err != nil {
+		return nil, openwallet.Errorf(openwallet.ErrAccountNotAddress, "accounts have not registered [%v] ", err)
+	}
 
-// 	accountAssets, err := decoder.wm.Api.GetAssetsBalance(bts.AccountName(account.Alias), tokenCoin, bts.AccountName(codeAccount))
-// 	if len(accountAssets) == 0 {
-// 		return rawTxArray, nil
-// 	}
+	fromAccount := accounts[0]
+	toAccount := accounts[1]
 
-// 	accountBalance = accountAssets[0]
-// 	accountBalanceDec := decimal.New(int64(accountBalance.Amount), -int32(accountBalance.Precision))
+	// 检查转出账户余额
+	balance, err := decoder.wm.Api.GetAssetsBalance(fromAccount.ID, assetID)
+	if err != nil || balance == nil {
+		return nil, openwallet.Errorf(openwallet.ErrInsufficientBalanceOfAccount, "all address's balance of account is not enough")
+	}
 
-// 	if accountBalanceDec.LessThan(minTransfer) || accountBalanceDec.LessThanOrEqual(decimal.Zero) {
-// 		return rawTxArray, nil
-// 	}
+	accountBalanceDec, _ := decimal.NewFromString(balance.Amount)
+	minTransfer = minTransfer.Shift(int32(precise))
+	retainedBalance = retainedBalance.Shift(int32(precise))
 
-// 	//计算汇总数量 = 余额 - 保留余额
-// 	sumAmount := accountBalanceDec.Sub(retainedBalance)
+	if accountBalanceDec.LessThan(minTransfer) || accountBalanceDec.LessThanOrEqual(decimal.Zero) {
+		return rawTxArray, nil
+	}
 
-// 	amountInt64 := sumAmount.Shift(int32(accountBalance.Precision)).IntPart()
-// 	quantity := bts.Asset{Amount: bts.Int64(amountInt64), Symbol: accountBalance.Symbol}
-// 	memo := sumRawTx.GetExtParam().Get("memo").String()
+	//计算汇总数量 = 余额 - 保留余额
+	sumAmount := accountBalanceDec.Sub(retainedBalance)
 
-// 	decoder.wm.Log.Debugf("balance: %v", accountBalanceDec.String())
-// 	decoder.wm.Log.Debugf("fees: %d", 0)
-// 	decoder.wm.Log.Debugf("sumAmount: %v", sumAmount)
+	amountInt64 := sumAmount.IntPart()
+	memo := sumRawTx.GetExtParam().Get("memo").String()
 
-// 	//创建一笔交易单
-// 	rawTx := &openwallet.RawTransaction{
-// 		Coin:    sumRawTx.Coin,
-// 		Account: sumRawTx.Account,
-// 		To: map[string]string{
-// 			sumRawTx.SummaryAddress: sumAmount.String(),
-// 		},
-// 		Required: 1,
-// 	}
+	decoder.wm.Log.Debugf("balance: %v", accountBalanceDec.String())
+	decoder.wm.Log.Debugf("fees: %d", 0)
+	decoder.wm.Log.Debugf("sumAmount: %v", sumAmount)
 
-// 	createTxErr := decoder.createRawTransaction(
-// 		wrapper,
-// 		rawTx,
-// 		bts.AccountName(bts.AccountName(account.Alias)),
-// 		quantity,
-// 		memo)
-// 	rawTxWithErr := &openwallet.RawTransactionWithError{
-// 		RawTx: rawTx,
-// 		Error: createTxErr,
-// 	}
+	//创建一笔交易单
+	rawTx := &openwallet.RawTransaction{
+		Coin:    sumRawTx.Coin,
+		Account: sumRawTx.Account,
+		To: map[string]string{
+			sumRawTx.SummaryAddress: sumAmount.String(),
+		},
+		Required: 1,
+	}
 
-// 	//创建成功，添加到队列
-// 	rawTxArray = append(rawTxArray, rawTxWithErr)
+	amount := types.AssetAmount{
+		AssetID: assetID,
+		Amount:  uint64(amountInt64),
+	}
+	fee := types.AssetAmount{
+		AssetID: assetID,
+		Amount:  0,
+	}
+	memo_from_priv, _ := hex.DecodeString(decoder.wm.Config.MemoPrivateKey)
+	memo_to_pub, _ := decoder.wm.DecoderV2.AddressDecode(toAccount.Options.MemoKey)
 
-// 	return rawTxArray, nil
-// }
+	op := types.NewTransferOperation(fromAccount.ID, toAccount.ID, amount, fee)
+	op.Memo = types.Memo{
+		From:    fromAccount.Options.MemoKey,
+		To:      toAccount.Options.MemoKey,
+		Nonce:   GenerateNonce(),
+		Message: encoding.SetMemoMessage(memo_from_priv, memo_to_pub, memo),
+	}
+	ops := &types.Operations{op}
+
+	createTxErr := decoder.createRawTransaction(
+		wrapper,
+		rawTx,
+		&accountBalanceDec,
+		account.Alias,
+		ops,
+		memo)
+	rawTxWithErr := &openwallet.RawTransactionWithError{
+		RawTx: rawTx,
+		Error: createTxErr,
+	}
+
+	//创建成功，添加到队列
+	rawTxArray = append(rawTxArray, rawTxWithErr)
+
+	return rawTxArray, nil
+}
 
 //createRawTransaction
 func (decoder *TransactionDecoder) createRawTransaction(
