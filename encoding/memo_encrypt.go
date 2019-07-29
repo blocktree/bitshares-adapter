@@ -19,6 +19,15 @@ func SetMemoMessage(priv, pub []byte, message string) string {
 	return hex.EncodeToString(encrypted)
 }
 
+// GetMemoMessage return the original memo
+func GetMemoMessage(priv, pub []byte, message string) string {
+	fromPub := owcrypt.PointDecompress(pub, owcrypt.ECC_CURVE_SECP256K1)
+	secret := getSharedSecret(priv, fromPub)
+	decrypted := AesDecryptCBC([]byte(message), secret)
+
+	return hex.EncodeToString(decrypted)
+}
+
 func getSharedSecret(priv, pub []byte) []byte {
 	sharedSecret, _ := owcrypt.Point_mul(pub[1:], priv, owcrypt.ECC_CURVE_SECP256K1)
 
