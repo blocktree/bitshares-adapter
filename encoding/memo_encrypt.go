@@ -5,27 +5,17 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha512"
-	"encoding/hex"
 
 	"github.com/blocktree/go-owcrypt"
 )
 
 // SetMemoMessage encrypte the memo
-func SetMemoMessage(priv, pub []byte, message string) string {
+func SetMemoMessage(priv, pub []byte, message string) []byte {
 	toPub := owcrypt.PointDecompress(pub, owcrypt.ECC_CURVE_SECP256K1)
 	secret := getSharedSecret(priv, toPub)
 	encrypted := AesEncryptCBC([]byte(message), secret)
 
-	return hex.EncodeToString(encrypted)
-}
-
-// GetMemoMessage return the original memo
-func GetMemoMessage(priv, pub []byte, message string) string {
-	fromPub := owcrypt.PointDecompress(pub, owcrypt.ECC_CURVE_SECP256K1)
-	secret := getSharedSecret(priv, fromPub)
-	decrypted := AesDecryptCBC([]byte(message), secret)
-
-	return hex.EncodeToString(decrypted)
+	return encrypted
 }
 
 func getSharedSecret(priv, pub []byte) []byte {

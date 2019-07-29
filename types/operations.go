@@ -1,7 +1,9 @@
 package types
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/blocktree/bitshares-adapter/encoding"
@@ -126,18 +128,58 @@ type TransferOperation struct {
 	Extensions []json.RawMessage `json:"extensions"`
 }
 
+type Buffer []byte
+
+func (p Buffer) String() string {
+	return hex.EncodeToString(p)
+}
+
+func (p *Buffer) FromString(data string) error {
+	buf, err := hex.DecodeString(data)
+	if err != nil {
+		return fmt.Errorf("DecodeString: %v", err)
+	}
+
+	*p = buf
+	return nil
+}
+
+func (p Buffer) Bytes() []byte {
+	return p
+}
+
+func (p Buffer) Marshal(encoder *encoding.Encoder) error {
+	enc := encoding.NewRollingEncoder(encoder)
+	enc.EncodeUVarint(uint64(len(p)))
+	enc.Encode(p.Bytes())
+	return enc.Err()
+}
+
+func (p Buffer) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.String())
+}
+
+func (p *Buffer) UnmarshalJSON(data []byte) error {
+	var b string
+	if err := json.Unmarshal(data, &b); err != nil {
+		return fmt.Errorf("Unmarshal: %v", err)
+	}
+
+	return p.FromString(b)
+}
+
 type Memo struct {
 	From    string `json:"from"`
 	To      string `json:"to"`
-	Nonce   string `json:"nonce"`
-	Message string `json:"message"`
+	Nonce   uint64 `json:"nonce"`
+	Message Buffer `json:"message"`
 }
 
 func (m Memo) Marshal(encoder *encoding.Encoder) error {
 	enc := encoding.NewRollingEncoder(encoder)
 	enc.Encode(m.From)
 	enc.Encode(m.To)
-	enc.Encode(m.Nonce)
+	enc.EncodeUVarint(m.Nonce)
 	enc.Encode(m.Message)
 	return enc.Err()
 }

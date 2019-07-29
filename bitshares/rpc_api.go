@@ -69,6 +69,7 @@ func (c *WalletClient) call(method string, request interface{}, queryWalletAPI b
 		host = c.WalletAPI
 	}
 
+	fmt.Println("[REQ]: %s", body)
 	r, err := c.client.Post(host, req.BodyJSON(&body), authHeader)
 
 	if c.Debug {
@@ -84,6 +85,7 @@ func (c *WalletClient) call(method string, request interface{}, queryWalletAPI b
 	}
 
 	resp := gjson.ParseBytes(r.Bytes())
+	fmt.Println("[RESP]: %v", resp.Raw)
 	err = c.isError(r)
 	if err != nil {
 		return nil, err

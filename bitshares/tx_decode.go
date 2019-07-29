@@ -534,8 +534,8 @@ func (decoder *TransactionDecoder) createRawTransaction(
 }
 
 // GenerateNonce Generate Nonce
-func GenerateNonce() string {
+func GenerateNonce() uint64 {
 	rand.Seed(time.Now().UnixNano())
 	nonce := rand.Intn(10000000000000000)
-	return fmt.Sprintf("%v", nonce)
+	return uint64(nonce)
 }
