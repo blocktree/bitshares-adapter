@@ -19,6 +19,8 @@ import (
 	"github.com/blocktree/bitshares-adapter/addrdec"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/openwallet"
+	"github.com/denkhaus/bitshares"
+	"github.com/denkhaus/bitshares/config"
 )
 
 type WalletManager struct {
@@ -33,6 +35,7 @@ type WalletManager struct {
 	ContractDecoder openwallet.SmartContractDecoder //智能合约解析器
 	Blockscanner    *BtsBlockScanner                //区块扫描器
 	CacheManager    openwallet.ICacheManager        //缓存管理器
+	WebsocketAPI    bitshares.WebsocketAPI          //bitshares WebsocketAPI
 }
 
 func NewWalletManager(cacheManager openwallet.ICacheManager) *WalletManager {
@@ -46,5 +49,11 @@ func NewWalletManager(cacheManager openwallet.ICacheManager) *WalletManager {
 	wm.Log = log.NewOWLogger(wm.Symbol())
 	wm.CacheManager = cacheManager
 	wm.ContractDecoder = NewContractDecoder(&wm)
+	wm.WebsocketAPI = NewWebsocketAPI(wm.Config.ServerWS)
 	return &wm
+}
+
+func NewWebsocketAPI(api string) bitshares.WebsocketAPI {
+	config.SetCurrent(config.ChainIDBTS)
+	return bitshares.NewWebsocketAPI(api)
 }

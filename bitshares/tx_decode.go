@@ -22,9 +22,12 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/blocktree/bitshares-adapter/encoding"
 	"github.com/blocktree/bitshares-adapter/txsigner"
 	"github.com/blocktree/bitshares-adapter/types"
+	"github.com/denkhaus/bitshares/config"
+	"github.com/denkhaus/bitshares/crypto"
+	"github.com/denkhaus/bitshares/operations"
+	bt "github.com/denkhaus/bitshares/types"
 
 	owcrypt "github.com/blocktree/go-owcrypt"
 	"github.com/blocktree/openwallet/openwallet"
@@ -99,25 +102,39 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 
 	memo := rawTx.GetExtParam().Get("memo").String()
 
-	amount := types.AssetAmount{
-		AssetID: assetID,
-		Amount:  uint64(amountDec.IntPart()),
+	asset := bt.AssetIDFromObject(bt.NewAssetID(assetID.String()))
+	amount := bt.AssetAmount{
+		Asset:  asset,
+		Amount: bt.Int64(amountDec.IntPart()),
 	}
-	fee := types.AssetAmount{
-		AssetID: assetID,
-		Amount:  0,
-	}
-	memo_from_priv, _ := hex.DecodeString(decoder.wm.Config.MemoPrivateKey)
-	memo_to_pub, _ := decoder.wm.DecoderV2.AddressDecode(toAccount.Options.MemoKey)
 
-	op := types.NewTransferOperation(fromAccount.ID, toAccount.ID, amount, fee)
-	op.Memo = types.Memo{
-		From:    fromAccount.Options.MemoKey,
-		To:      toAccount.Options.MemoKey,
-		Nonce:   GenerateNonce(),
-		Message: encoding.SetMemoMessage(memo_from_priv, memo_to_pub, memo),
+	op := operations.TransferOperation{
+		Amount:     amount,
+		Extensions: bt.Extensions{},
+		From:       bt.AccountIDFromObject(bt.NewAccountID(fromAccount.ID.String())),
+		To:         bt.AccountIDFromObject(bt.NewAccountID(toAccount.ID.String())),
 	}
-	ops := &types.Operations{op}
+
+	fromPublicKey, _ := bt.NewPublicKeyFromString(fromAccount.Options.MemoKey)
+	toPublicKey, _ := bt.NewPublicKeyFromString(toAccount.Options.MemoKey)
+
+	if memo != "" {
+		m := bt.Memo{
+			From:  *fromPublicKey,
+			To:    *toPublicKey,
+			Nonce: bt.UInt64(rand.Uint64()),
+		}
+		keyBag := crypto.NewKeyBag()
+		keyBag.Add(decoder.wm.Config.MemoPrivateKey)
+
+		if err := keyBag.EncryptMemo(&m, memo); err != nil {
+			return fmt.Errorf("EncryptMemo", err)
+		}
+
+		op.Memo = &m
+	}
+
+	ops := &bt.Operations{&op}
 
 	createTxErr := decoder.createRawTransaction(
 		wrapper,
@@ -188,17 +205,15 @@ func (decoder *TransactionDecoder) VerifyRawTransaction(wrapper openwallet.Walle
 		return fmt.Errorf("transaction signature is empty")
 	}
 
-	var tx types.Transaction
+	var tx bt.SignedTransaction
 	txHex, err := hex.DecodeString(rawTx.RawHex)
 	if err != nil {
-		return fmt.Errorf("transaction decode failed, unexpected error: %v", err)
+		return fmt.Errorf("transaction DecodeString failed, unexpected error: %v", err)
 	}
-	err = json.Unmarshal(txHex, &tx)
+	err = tx.UnmarshalJSON(txHex)
 	if err != nil {
-		return fmt.Errorf("transaction decode failed, unexpected error: %v", err)
+		return fmt.Errorf("transaction UnmarshalJSON failed, unexpected error: %v", err)
 	}
-
-	stx := txsigner.NewSignedTransaction(&tx)
 
 	//支持多重签名
 	for accountID, keySignatures := range rawTx.Signatures {
@@ -217,15 +232,15 @@ func (decoder *TransactionDecoder) VerifyRawTransaction(wrapper openwallet.Walle
 				return fmt.Errorf("transaction verify failed: %v", err)
 			}
 
-			stx.Signatures = append(
-				stx.Signatures,
-				hex.EncodeToString(compactSig),
+			tx.Signatures = append(
+				tx.Signatures,
+				compactSig,
 			)
 		}
 	}
 
 	rawTx.IsCompleted = true
-	jsonTx, _ := json.Marshal(stx)
+	jsonTx, _ := tx.MarshalJSON()
 	rawTx.RawHex = hex.EncodeToString(jsonTx)
 
 	return nil
@@ -374,25 +389,39 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper 
 		Required: 1,
 	}
 
-	amount := types.AssetAmount{
-		AssetID: assetID,
-		Amount:  uint64(amountInt64),
+	asset := bt.AssetIDFromObject(bt.NewAssetID(assetID.String()))
+	amount := bt.AssetAmount{
+		Asset:  asset,
+		Amount: bt.Int64(amountInt64),
 	}
-	fee := types.AssetAmount{
-		AssetID: assetID,
-		Amount:  0,
-	}
-	memo_from_priv, _ := hex.DecodeString(decoder.wm.Config.MemoPrivateKey)
-	memo_to_pub, _ := decoder.wm.DecoderV2.AddressDecode(toAccount.Options.MemoKey)
 
-	op := types.NewTransferOperation(fromAccount.ID, toAccount.ID, amount, fee)
-	op.Memo = types.Memo{
-		From:    fromAccount.Options.MemoKey,
-		To:      toAccount.Options.MemoKey,
-		Nonce:   GenerateNonce(),
-		Message: encoding.SetMemoMessage(memo_from_priv, memo_to_pub, memo),
+	op := operations.TransferOperation{
+		Amount:     amount,
+		Extensions: bt.Extensions{},
+		From:       bt.AccountIDFromObject(bt.NewAccountID(fromAccount.ID.String())),
+		To:         bt.AccountIDFromObject(bt.NewAccountID(toAccount.ID.String())),
 	}
-	ops := &types.Operations{op}
+
+	fromPublicKey, _ := bt.NewPublicKeyFromString(fromAccount.Options.MemoKey)
+	toPublicKey, _ := bt.NewPublicKeyFromString(toAccount.Options.MemoKey)
+
+	if memo != "" {
+		m := bt.Memo{
+			From:  *fromPublicKey,
+			To:    *toPublicKey,
+			Nonce: bt.UInt64(rand.Uint64()),
+		}
+		keyBag := crypto.NewKeyBag()
+		keyBag.Add(decoder.wm.Config.MemoPrivateKey)
+
+		if err := keyBag.EncryptMemo(&m, memo); err != nil {
+			return nil, fmt.Errorf("EncryptMemo", err)
+		}
+
+		op.Memo = &m
+	}
+
+	ops := &bt.Operations{&op}
 
 	createTxErr := decoder.createRawTransaction(
 		wrapper,
@@ -418,7 +447,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 	rawTx *openwallet.RawTransaction,
 	balanceDec *decimal.Decimal,
 	from string,
-	operations *types.Operations,
+	ops *bt.Operations,
 	memo string) *openwallet.Error {
 
 	var (
@@ -429,10 +458,11 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		keySignList      = make([]*openwallet.KeySignature, 0)
 		accountID        = rawTx.Account.AccountID
 		amountDec        = decimal.Zero
-		chainID          = decoder.wm.Config.ChainID
 		curveType        = decoder.wm.Config.CurveType
-		assetID          = types.MustParseObjectID(rawTx.Coin.Contract.Address)
+		assetID          = bt.NewAssetID(rawTx.Coin.Contract.Address)
 		precise          = rawTx.Coin.Contract.Decimals
+		operations       = bt.Operations(*ops)
+		api              = decoder.wm.WebsocketAPI
 	)
 
 	for k, v := range rawTx.To {
@@ -441,48 +471,39 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		break
 	}
 
-	info, err := decoder.wm.Api.GetBlockchainInfo()
-	if err != nil {
-		return openwallet.Errorf(openwallet.ErrCallFullNodeAPIFailed, "Cannot get chain info")
-	}
-
-	block, err := decoder.wm.Api.GetBlockByHeight(uint32(info.LastIrreversibleBlockNum))
-	if err != nil {
-		return openwallet.Errorf(openwallet.ErrCallFullNodeAPIFailed, "failed to get block")
-	}
-
-	refBlockPrefix, err := txsigner.RefBlockPrefix(block.Previous)
-	if err != nil {
-		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "failed to sign block prefix")
-	}
-
-	expiration := info.Timestamp.Add(10 * time.Minute)
-	stx := txsigner.NewSignedTransaction(&types.Transaction{
-		RefBlockNum:    txsigner.RefBlockNum(uint32(info.LastIrreversibleBlockNum) - 1&0xffff),
-		RefBlockPrefix: refBlockPrefix,
-		Expiration:     types.Time{Time: &expiration},
-	})
-
-	fees, err := decoder.wm.Api.GetRequiredFee(*operations, assetID.String())
+	fees, err := api.GetRequiredFees(operations, assetID)
 	if err != nil {
 		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "can't get fees")
 	}
 
 	feesDec := decimal.Zero
-	for idx, op := range *operations {
-		if top, ok := op.(*types.TransferOperation); ok {
-			feesDec = feesDec.Add(decimal.New(int64(fees[idx].Amount), 0))
-			top.Fee.Amount = fees[idx].Amount
-		}
-		stx.PushOperation(op)
+	for _, fee := range fees {
+		feesDec = feesDec.Add(decimal.New(int64(fee.Amount), 0))
 	}
 
 	if balanceDec.LessThan(amountDec.Add(feesDec)) {
 		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "the balance: %s is not enough", balanceDec.Shift(-int32(precise)))
 	}
 
+	if err := operations.ApplyFees(fees); err != nil {
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "ApplyFees")
+	}
+
+	props, err := api.GetDynamicGlobalProperties()
+	if err != nil {
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "GetDynamicGlobalProperties")
+	}
+
+	tx, err := bt.NewSignedTransactionWithBlockData(props)
+	if err != nil {
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "NewTransaction")
+	}
+
+	tx.Operations = operations
+	signer := crypto.NewTransactionSigner(tx)
+
 	//交易哈希
-	digest, err := stx.Digest(chainID)
+	digest, err := signer.Digest(config.Current())
 	if err != nil {
 		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "Calculate digest error: %v", err)
 	}
@@ -520,7 +541,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		rawTx.Signatures = make(map[string][]*openwallet.KeySignature)
 	}
 
-	jsonTx, _ := json.Marshal(stx)
+	jsonTx, _ := tx.MarshalJSON()
 	rawTx.RawHex = hex.EncodeToString(jsonTx)
 	rawTx.Signatures[rawTx.Account.AccountID] = keySignList
 	rawTx.FeeRate = "0"
@@ -531,11 +552,4 @@ func (decoder *TransactionDecoder) createRawTransaction(
 	rawTx.TxTo = txTo
 
 	return nil
-}
-
-// GenerateNonce Generate Nonce
-func GenerateNonce() uint64 {
-	rand.Seed(time.Now().UnixNano())
-	nonce := rand.Intn(10000000000000000)
-	return uint64(nonce)
 }
