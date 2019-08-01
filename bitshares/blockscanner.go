@@ -351,10 +351,14 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 				return ExtractResult{Success: false}
 			}
 
+			accounts, _ := bs.wm.Api.GetAccounts(transferOperation.From.String(), transferOperation.To.String())
+			from := accounts[0]
+			to := accounts[1]
+
 			//订阅地址为交易单中的发送者
-			accountID1, ok1 := scanTargetFunc(openwallet.ScanTarget{Alias: transferOperation.From.String(), Symbol: bs.wm.Symbol(), BalanceModelType: openwallet.BalanceModelTypeAccount})
+			accountID1, ok1 := scanTargetFunc(openwallet.ScanTarget{Alias: from.Name, Symbol: bs.wm.Symbol(), BalanceModelType: openwallet.BalanceModelTypeAccount})
 			//订阅地址为交易单中的接收者
-			accountID2, ok2 := scanTargetFunc(openwallet.ScanTarget{Alias: transferOperation.To.String(), Symbol: bs.wm.Symbol(), BalanceModelType: openwallet.BalanceModelTypeAccount})
+			accountID2, ok2 := scanTargetFunc(openwallet.ScanTarget{Alias: to.Name, Symbol: bs.wm.Symbol(), BalanceModelType: openwallet.BalanceModelTypeAccount})
 			if accountID1 == accountID2 && len(accountID1) > 0 && len(accountID2) > 0 {
 				bs.InitExtractResult(accountID1, transferOperation, &result, 0)
 			} else {

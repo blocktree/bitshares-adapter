@@ -78,7 +78,7 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 	}
 
 	// 检查转出、目标账户是否存在
-	accounts, err := decoder.wm.Api.GetAccounts([]string{account.Alias, to})
+	accounts, err := decoder.wm.Api.GetAccounts(account.Alias, to)
 	if err != nil {
 		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "accounts have not registered [%v] ", err)
 	}
@@ -347,7 +347,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper 
 	}
 
 	// 检查转出、目标账户是否存在
-	accounts, err := decoder.wm.Api.GetAccounts([]string{account.Alias, sumRawTx.SummaryAddress})
+	accounts, err := decoder.wm.Api.GetAccounts(account.Alias, sumRawTx.SummaryAddress)
 	if err != nil {
 		return nil, openwallet.Errorf(openwallet.ErrAccountNotAddress, "accounts have not registered [%v] ", err)
 	}
