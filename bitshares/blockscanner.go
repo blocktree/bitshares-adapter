@@ -408,6 +408,10 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		Token:      token,
 	}
 
+	accounts, _ := bs.wm.Api.GetAccounts(operation.From.String(), operation.To.String())
+	from := accounts[0]
+	to := accounts[1]
+
 	transx := &openwallet.Transaction{
 		Fees:        "0",
 		Coin:        coin,
@@ -417,8 +421,8 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		// Decimal:     0,
 		Amount:      amount,
 		ConfirmTime: result.BlockTime,
-		From:        []string{operation.From.String() + ":" + amount},
-		To:          []string{operation.To.String() + ":" + amount},
+		From:        []string{from.Name + ":" + amount},
+		To:          []string{to.Name + ":" + amount},
 		IsMemo:      true,
 		Status:      status,
 		Reason:      reason,
@@ -470,7 +474,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 			// Decimal:     0,
 			Amount:      fee,
 			ConfirmTime: result.BlockTime,
-			From:        []string{operation.From.String() + ":" + fee},
+			From:        []string{from.Name + ":" + fee},
 			IsMemo:      true,
 			Status:      status,
 			Reason:      reason,
@@ -495,11 +499,14 @@ func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, tx
 	tx := txExtractData.Transaction
 	coin := openwallet.Coin(tx.Coin)
 
+	accounts, _ := bs.wm.Api.GetAccounts(operation.From.String())
+	from := accounts[0]
+
 	//主网from交易转账信息，第一个TxInput
 	txInput := &openwallet.TxInput{}
 	txInput.Recharge.Sid = openwallet.GenTxInputSID(tx.TxID, bs.wm.Symbol(), coin.ContractID, uint64(0))
 	txInput.Recharge.TxID = tx.TxID
-	txInput.Recharge.Address = operation.From.String()
+	txInput.Recharge.Address = from.Name
 	txInput.Recharge.Coin = coin
 	txInput.Recharge.Amount = tx.Amount
 	txInput.Recharge.Symbol = coin.Symbol
@@ -531,11 +538,14 @@ func (bs *BtsBlockScanner) extractTxOutput(operation *types.TransferOperation, t
 	tx := txExtractData.Transaction
 	coin := openwallet.Coin(tx.Coin)
 
+	accounts, _ := bs.wm.Api.GetAccounts(operation.To.String())
+	to := accounts[0]
+
 	//主网to交易转账信息,只有一个TxOutPut
 	txOutput := &openwallet.TxOutPut{}
 	txOutput.Recharge.Sid = openwallet.GenTxOutPutSID(tx.TxID, bs.wm.Symbol(), coin.ContractID, uint64(0))
 	txOutput.Recharge.TxID = tx.TxID
-	txOutput.Recharge.Address = operation.To.String()
+	txOutput.Recharge.Address = to.Name
 	txOutput.Recharge.Coin = coin
 	txOutput.Recharge.Amount = tx.Amount
 	txOutput.Recharge.Symbol = coin.Symbol
