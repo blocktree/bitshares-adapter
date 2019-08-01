@@ -48,9 +48,17 @@ func (decoder *ContractDecoder) GetTokenBalanceByAddress(contract openwallet.Sma
 			decoder.wm.Log.Errorf("get account[%v] id failed, err: %v", addr, err)
 		}
 
+		if account == nil {
+			return nil, err
+		}
+
 		balance, err := decoder.wm.Api.GetAssetsBalance(*account, asset)
 		if err != nil {
 			decoder.wm.Log.Errorf("get account[%v] token balance failed, err: %v", addr, err)
+		}
+
+		if balance == nil {
+			return nil, err
 		}
 
 		balanceDec, _ := decimal.NewFromString(balance.Amount)
