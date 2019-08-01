@@ -13,7 +13,11 @@ func Decrypt(msg, pub, wif string) (string, error) {
 	var buf types.Buffer
 
 	config.SetCurrent(config.ChainIDBTS)
-	from, _ := types.NewPublicKeyFromString(pub)
+	from, err := types.NewPublicKeyFromString(pub)
+	if err != nil {
+		return "", fmt.Errorf("NewPublicKeyFromString: %v", err)
+	}
+
 	buf.FromString(msg)
 
 	memo := types.Memo{
@@ -23,12 +27,12 @@ func Decrypt(msg, pub, wif string) (string, error) {
 
 	priv, err := types.NewPrivateKeyFromWif(wif)
 	if err != nil {
-		return "", fmt.Errorf("NewPrivateKeyFromWif", err)
+		return "", fmt.Errorf("NewPrivateKeyFromWif: %v", err)
 	}
 
 	m, err := memo.Decrypt(priv)
 	if err != nil {
-		return "", fmt.Errorf("Decrypt", err)
+		return "", fmt.Errorf("Decrypt: %v", err)
 	}
 
 	return m, nil
