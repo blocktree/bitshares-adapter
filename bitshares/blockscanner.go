@@ -257,8 +257,12 @@ func (bs *BtsBlockScanner) BatchExtractTransactions(blockHeight uint64, blockHas
 
 	//提取工作
 	extractWork := func(eblockHeight uint64, eBlockHash string, eBlockTime int64, mTransactions []*types.Transaction, mtxIDs []string, eProducer chan ExtractResult) {
-		for _, tx := range mTransactions {
+		for id, tx := range mTransactions {
 			bs.extractingCH <- struct{}{}
+
+			if len(mtxIDs) > id {
+				tx.TransactionID = mtxIDs[id]
+			}
 
 			go func(mBlockHeight uint64, mTx *types.Transaction, end chan struct{}, mProducer chan<- ExtractResult) {
 				//导出提出的交易
@@ -338,12 +342,15 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 
 		if transferOperation, ok := operation.(*types.TransferOperation); ok {
 
-			txID, err := bs.wm.Api.GetTransactionID(transaction)
-			bs.wm.Log.Std.Debug("tx: %v", txID)
+			txID := transaction.TransactionID
+			if len(txID) == 0 {
+				txID, err := bs.wm.Api.GetTransactionID(transaction)
+				bs.wm.Log.Std.Debug("tx: %v", txID)
 
-			if err != nil || len(txID) == 0 {
-				bs.wm.Log.Std.Error("cannot get txid, block: %v (sig) %s \n%v", blockHeight, transaction.Signatures, err)
-				return ExtractResult{Success: false}
+				if err != nil || len(txID) == 0 {
+					bs.wm.Log.Std.Error("cannot get txid, block: %v (sig) %s \n%v", blockHeight, transaction.Signatures, err)
+					return ExtractResult{Success: false}
+				}
 			}
 			result.TxID = txID
 

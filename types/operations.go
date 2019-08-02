@@ -171,7 +171,7 @@ func (p *Buffer) UnmarshalJSON(data []byte) error {
 type Memo struct {
 	From    string `json:"from"`
 	To      string `json:"to"`
-	Nonce   uint64 `json:"nonce"`
+	Nonce   string `json:"nonce"`
 	Message Buffer `json:"message"`
 }
 
@@ -179,7 +179,7 @@ func (m Memo) Marshal(encoder *encoding.Encoder) error {
 	enc := encoding.NewRollingEncoder(encoder)
 	enc.Encode(m.From)
 	enc.Encode(m.To)
-	enc.EncodeUVarint(m.Nonce)
+	enc.Encode(m.Nonce)
 	enc.Encode(m.Message)
 	return enc.Err()
 }

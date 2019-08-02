@@ -143,22 +143,11 @@ func (c *WalletClient) GetBlockchainInfo() (*BlockchainInfo, error) {
 
 // GetBlockByHeight returns a certain block
 func (c *WalletClient) GetBlockByHeight(height uint32) (*Block, error) {
-	r, err := c.call("get_block_header", []interface{}{height + 1}, false)
-	if err != nil {
-		return nil, err
-	}
-	header := NewBlockHeader(r)
-
-	r, err = c.call("get_block", []interface{}{height}, false)
+	r, err := c.call("get_block", []interface{}{height}, false)
 	if err != nil {
 		return nil, err
 	}
 	block := NewBlock(height, r)
-	block.BlockID = header.Previous
-
-	// block.CalculateID()
-	// log.Std.Info("calculated block id:%s\n", block.BlockID)
-
 	return block, nil
 }
 
