@@ -17,7 +17,6 @@ package bitshares
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
@@ -249,24 +248,24 @@ func (decoder *TransactionDecoder) VerifyRawTransaction(wrapper openwallet.Walle
 // SubmitRawTransaction 广播交易单
 func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.WalletDAI, rawTx *openwallet.RawTransaction) (*openwallet.Transaction, error) {
 
-	var stx types.Transaction
+	var stx bt.SignedTransaction
 	txHex, err := hex.DecodeString(rawTx.RawHex)
 	if err != nil {
-		return nil, fmt.Errorf("transaction decode failed, unexpected error: %v", err)
+		return nil, fmt.Errorf("transaction decode hex failed, unexpected error: %v", err)
 	}
-	err = json.Unmarshal(txHex, &stx)
+	err = stx.UnmarshalJSON(txHex)
 	if err != nil {
-		return nil, fmt.Errorf("transaction decode failed, unexpected error: %v", err)
+		return nil, fmt.Errorf("transaction decode json failed, unexpected error: %v", err)
 	}
 
-	response, err := decoder.wm.Api.BroadcastTransaction(&stx)
+	resp, err := decoder.wm.WebsocketAPI.BroadcastTransactionSynchronous(&stx)
 	if err != nil {
 		return nil, fmt.Errorf("push transaction: %s", err)
 	}
 
-	decoder.wm.Log.Info("Transaction [%s] submitted to the network successfully.", response.ID)
+	decoder.wm.Log.Info("Transaction [%s] submitted to the network successfully.", resp.ID)
 
-	rawTx.TxID = response.ID
+	rawTx.TxID = resp.ID
 	rawTx.IsSubmit = true
 
 	decimals := int32(rawTx.Coin.Contract.Decimals)
