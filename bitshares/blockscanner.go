@@ -352,7 +352,7 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 				bs.wm.Log.Std.Debug("tx: %v", txID)
 
 				if err != nil || len(txID) == 0 {
-					bs.wm.Log.Std.Error("cannot get txid, block: %v (sig) %s \n%v", blockHeight, transaction.Signatures, err)
+					bs.wm.Log.Std.Error("cannot get txid, block: %v %s \n%v", blockHeight, transaction.Signatures, err)
 					return ExtractResult{Success: false}
 				}
 			}
@@ -365,7 +365,7 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 
 			accounts, err := bs.wm.Api.GetAccounts(transferOperation.From.String(), transferOperation.To.String())
 			if err != nil || len(accounts) != 2 {
-				bs.wm.Log.Std.Error("cannot get accounts, block: %v (sig) %s \n%v", blockHeight, transaction.Signatures, err)
+				bs.wm.Log.Std.Error("cannot get accounts, block: %v %s \n%v", blockHeight, txID, err)
 				return ExtractResult{Success: false}
 			}
 			from := accounts[0]
