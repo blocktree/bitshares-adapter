@@ -191,6 +191,10 @@ func (bs *BtsBlockScanner) ScanBlockTask() {
 			bs.newBlockNotify(block)
 		}
 	}
+
+	//重扫失败区块
+	bs.RescanFailedRecord()
+
 }
 
 //newBlockNotify 获得新区块后，通知给观测者
@@ -716,4 +720,59 @@ func (bs *BtsBlockScanner) GetCurrentBlockHeader() (*openwallet.BlockHeader, err
 		return nil, err
 	}
 	return &openwallet.BlockHeader{Height: uint64(infoResp.HeadBlockNum), Hash: infoResp.HeadBlockID}, nil
+}
+
+//rescanFailedRecord 重扫失败记录
+func (bs *BtsBlockScanner) RescanFailedRecord() {
+
+	var (
+		blockMap = make(map[uint64][]string)
+	)
+
+	list, err := bs.wm.GetUnscanRecords()
+	if err != nil {
+		bs.wm.Log.Std.Info("block scanner can not get rescan data; unexpected error: %v", err)
+	}
+
+	//组合成批处理
+	for _, r := range list {
+
+		if _, exist := blockMap[r.BlockHeight]; !exist {
+			blockMap[r.BlockHeight] = make([]string, 0)
+		}
+
+		if len(r.TxID) > 0 {
+			arr := blockMap[r.BlockHeight]
+			arr = append(arr, r.TxID)
+
+			blockMap[r.BlockHeight] = arr
+		}
+	}
+
+	for height, _ := range blockMap {
+
+		if height == 0 {
+			continue
+		}
+
+		bs.wm.Log.Std.Info("block scanner rescanning height: %d ...", height)
+
+		block, err := bs.wm.Api.GetBlockByHeight(uint32(height))
+		if err != nil {
+			bs.wm.Log.Std.Info("block scanner can not get new block data; unexpected error: %v", err)
+			continue
+		}
+
+		err = bs.BatchExtractTransactions(height, block.BlockID, block.Timestamp.Unix(), block.Transactions, block.TransactionIDs)
+		if err != nil {
+			bs.wm.Log.Std.Info("block scanner can not extractRechargeRecords; unexpected error: %v", err)
+			continue
+		}
+
+		//删除未扫记录
+		bs.DeleteUnscanRecord(uint32(height))
+	}
+
+	//删除未没有找到交易记录的重扫记录
+	bs.wm.DeleteUnscanRecordNotFindTX()
 }

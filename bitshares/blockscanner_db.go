@@ -18,6 +18,7 @@ package bitshares
 import (
 	"errors"
 	"path/filepath"
+	"strings"
 
 	"github.com/asdine/storm"
 )
@@ -94,6 +95,23 @@ func (bs *BtsBlockScanner) GetLocalBlock(height uint32) (*Block, error) {
 	return &blockHeader, nil
 }
 
+//获取未扫记录
+func (wm *WalletManager) GetUnscanRecords() ([]*UnscanRecord, error) {
+	//获取本地区块高度
+	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	var list []*UnscanRecord
+	err = db.All(&list)
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
 //SaveUnscanRecord 保存交易记录到钱包数据库
 func (bs *BtsBlockScanner) SaveUnscanRecord(record *UnscanRecord) error {
 
@@ -131,4 +149,35 @@ func (bs *BtsBlockScanner) DeleteUnscanRecord(height uint32) error {
 	}
 
 	return nil
+}
+
+//DeleteUnscanRecordNotFindTX 删除未没有找到交易记录的重扫记录
+func (wm *WalletManager) DeleteUnscanRecordNotFindTX() error {
+
+	//删除找不到交易单
+	reason := "[-5]No information available about transaction"
+
+	//获取本地区块高度
+	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	var list []*UnscanRecord
+	err = db.All(&list)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin(true)
+	if err != nil {
+		return err
+	}
+	for _, r := range list {
+		if strings.HasPrefix(r.Reason, reason) {
+			tx.DeleteStruct(r)
+		}
+	}
+	return tx.Commit()
 }
