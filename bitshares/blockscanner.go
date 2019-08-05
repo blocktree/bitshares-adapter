@@ -364,7 +364,7 @@ func (bs *BtsBlockScanner) ExtractTransaction(blockHeight uint64, blockHash stri
 			}
 
 			accounts, err := bs.wm.Api.GetAccounts(transferOperation.From.String(), transferOperation.To.String())
-			if err != nil || len(accounts) != 2 {
+			if len(accounts) != 2 {
 				bs.wm.Log.Std.Error("cannot get accounts, block: %v %s \n%v", blockHeight, txID, err)
 				return ExtractResult{Success: false}
 			}
@@ -425,7 +425,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 	}
 
 	accounts, err := bs.wm.Api.GetAccounts(operation.From.String(), operation.To.String())
-	if err != nil || len(accounts) != 2 {
+	if len(accounts) != 2 {
 		bs.wm.Log.Std.Error("cannot get accounts, %s %s \n %v", operation.From.String(), operation.To.String(), err)
 		return
 	}
@@ -520,7 +520,7 @@ func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, tx
 	coin := openwallet.Coin(tx.Coin)
 
 	accounts, err := bs.wm.Api.GetAccounts(operation.From.String())
-	if err != nil || len(accounts) != 1 {
+	if len(accounts) != 1 {
 		bs.wm.Log.Std.Error("cannot get accounts, %s \n %v", operation.From.String(), err)
 		return
 	}
@@ -563,7 +563,7 @@ func (bs *BtsBlockScanner) extractTxOutput(operation *types.TransferOperation, t
 	coin := openwallet.Coin(tx.Coin)
 
 	accounts, err := bs.wm.Api.GetAccounts(operation.To.String())
-	if err != nil || len(accounts) != 1 {
+	if len(accounts) != 1 {
 		bs.wm.Log.Std.Error("cannot get accounts, %s \n %v", operation.To.String(), err)
 		return
 	}
