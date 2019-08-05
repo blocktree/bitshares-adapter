@@ -470,7 +470,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		break
 	}
 
-	fees, err := api.GetRequiredFees(operations, assetID)
+	fees, err := decoder.wm.Api.GetRequiredFee(operations, assetID.String())
 	if err != nil {
 		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "can't get fees")
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/blocktree/bitshares-adapter/types"
 	"github.com/blocktree/openwallet/log"
+	bt "github.com/denkhaus/bitshares/types"
 	"github.com/imroc/req"
 	"github.com/tidwall/gjson"
 )
@@ -52,6 +53,7 @@ func (c *WalletClient) call(method string, request interface{}, queryWalletAPI b
 	authHeader := req.Header{
 		"Accept":       "application/json",
 		"Content-Type": "application/json",
+		"Keep-Alive":   "timeout=1, max=1",
 	}
 
 	//json-rpc
@@ -209,14 +211,14 @@ func (c *WalletClient) GetAccounts(names_or_ids ...string) ([]*types.Account, er
 	return resp, nil
 }
 
-func (c *WalletClient) GetRequiredFee(ops []types.Operation, assetID string) ([]types.AssetAmount, error) {
-	var resp []types.AssetAmount
+func (c *WalletClient) GetRequiredFee(ops []bt.Operation, assetID string) ([]bt.AssetAmount, error) {
+	var resp []bt.AssetAmount
 
 	opsJSON := []interface{}{}
 	for _, o := range ops {
 		_, err := json.Marshal(o)
 		if err != nil {
-			return []types.AssetAmount{}, err
+			return []bt.AssetAmount{}, err
 		}
 
 		opArr := []interface{}{o.Type(), o}
