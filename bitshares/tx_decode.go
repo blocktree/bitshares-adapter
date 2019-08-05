@@ -127,7 +127,7 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 		keyBag.Add(decoder.wm.Config.MemoPrivateKey)
 
 		if err := keyBag.EncryptMemo(&m, memo); err != nil {
-			return fmt.Errorf("EncryptMemo", err)
+			return fmt.Errorf("EncryptMemo: %v", err)
 		}
 
 		op.Memo = &m
@@ -414,7 +414,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper 
 		keyBag.Add(decoder.wm.Config.MemoPrivateKey)
 
 		if err := keyBag.EncryptMemo(&m, memo); err != nil {
-			return nil, fmt.Errorf("EncryptMemo", err)
+			return nil, fmt.Errorf("EncryptMemo: %v", err)
 		}
 
 		op.Memo = &m
