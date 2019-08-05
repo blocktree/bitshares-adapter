@@ -258,7 +258,7 @@ func (decoder *TransactionDecoder) SubmitRawTransaction(wrapper openwallet.Walle
 		return nil, fmt.Errorf("transaction decode json failed, unexpected error: %v", err)
 	}
 
-	resp, err := decoder.wm.WebsocketAPI.BroadcastTransactionSynchronous(&stx)
+	resp, err := decoder.wm.Api.BroadcastTransaction(&stx)
 	if err != nil {
 		return nil, fmt.Errorf("push transaction: %s", err)
 	}

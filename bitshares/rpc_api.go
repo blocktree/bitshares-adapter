@@ -1,8 +1,10 @@
 package bitshares
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -53,7 +55,7 @@ func (c *WalletClient) call(method string, request interface{}, queryWalletAPI b
 	authHeader := req.Header{
 		"Accept":       "application/json",
 		"Content-Type": "application/json",
-		"Keep-Alive":   "timeout=1, max=1",
+		"Connection":   "close",
 	}
 
 	//json-rpc
@@ -237,7 +239,7 @@ func (c *WalletClient) GetRequiredFee(ops []bt.Operation, assetID string) ([]bt.
 }
 
 // BroadcastTransaction broadcast a transaction
-func (c *WalletClient) BroadcastTransaction(tx *types.Transaction) (*BroadcastResponse, error) {
+func (c *WalletClient) BroadcastTransaction(tx *bt.SignedTransaction) (*BroadcastResponse, error) {
 	resp := BroadcastResponse{}
 
 	r, err := c.call("broadcast_transaction", []interface{}{tx}, true)
@@ -261,4 +263,44 @@ func (c *WalletClient) GetTransactionID(tx *types.Transaction) (string, error) {
 		return "", err
 	}
 	return r.String(), err
+}
+
+func post(url, method string, request interface{}) (*gjson.Result, error) {
+
+	var (
+		body = make(map[string]interface{}, 0)
+	)
+
+	//json-rpc
+	body["jsonrpc"] = "2.0"
+	body["id"] = 1
+	body["method"] = method
+	body["params"] = request
+
+	j, err := json.Marshal(&body)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(j))
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Connection", "close")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	ret, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("response error:", err)
+	}
+	// fmt.Println("response Body:", string(ret))
+	gj := gjson.ParseBytes(ret)
+	result := gj.Get("result")
+
+	return &result, nil
 }
