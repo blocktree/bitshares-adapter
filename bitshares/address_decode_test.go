@@ -26,11 +26,11 @@ func TestAddressDecoder_AddressEncode(t *testing.T) {
 	addrdec.Default.IsTestNet = false
 
 	p2pk, _ := hex.DecodeString("5b1ac00a18dc9bb1a0494206d9ad72ef7fed0873")
-	p2pkAddr := addrdec.Default.AddressEncode(p2pk)
+	p2pkAddr, _ := addrdec.Default.AddressEncode(p2pk)
 	t.Logf("p2pkAddr: %s", p2pkAddr)
 
 	p2sh, _ := hex.DecodeString("adf2c47cbf6a053ebf45b033ba2044c36984a468")
-	p2shAddr := addrdec.Default.AddressEncode(p2sh)
+	p2shAddr, _ := addrdec.Default.AddressEncode(p2sh)
 	t.Logf("p2shAddr: %s", p2shAddr)
 }
 
