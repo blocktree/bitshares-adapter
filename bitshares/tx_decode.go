@@ -17,6 +17,7 @@ package bitshares
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
@@ -461,7 +462,6 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		assetID          = bt.NewAssetID(rawTx.Coin.Contract.Address)
 		precise          = rawTx.Coin.Contract.Decimals
 		operations       = bt.Operations(*ops)
-		api              = decoder.wm.WebsocketAPI
 	)
 
 	for k, v := range rawTx.To {
@@ -488,9 +488,18 @@ func (decoder *TransactionDecoder) createRawTransaction(
 		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "ApplyFees")
 	}
 
-	props, err := api.GetDynamicGlobalProperties()
+	info, err := decoder.wm.Api.GetBlockchainInfo()
 	if err != nil {
-		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "GetDynamicGlobalProperties")
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "GetBlockchainInfo")
+	}
+
+	j, _ := json.Marshal(info.HeadBlockID)
+	headBlockID := bt.String{}
+	headBlockID.UnmarshalJSON(j)
+	props := &bt.DynamicGlobalProperties{
+		HeadBlockID:              headBlockID,
+		HeadBlockNumber:          bt.UInt32(info.HeadBlockNum),
+		LastIrreversibleBlockNum: bt.UInt32(info.LastIrreversibleBlockNum),
 	}
 
 	tx, err := bt.NewSignedTransactionWithBlockData(props)
