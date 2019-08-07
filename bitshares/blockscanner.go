@@ -16,7 +16,6 @@
 package bitshares
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -449,8 +448,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		TxType:      0,
 	}
 
-	memo, _ := json.Marshal(operation.Memo)
-	transx.SetExtParam("memo", memo)
+	transx.SetExtParam("memo", operation.Memo)
 
 	wxID := openwallet.GenTransactionWxID(transx)
 	transx.WxID = wxID
