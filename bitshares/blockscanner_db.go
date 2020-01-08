@@ -16,168 +16,106 @@
 package bitshares
 
 import (
-	"errors"
-	"path/filepath"
-	"strings"
-
-	"github.com/asdine/storm"
+	"fmt"
+	"github.com/blocktree/openwallet/openwallet"
 )
 
 //SaveLocalBlockHead 记录区块高度和hash到本地
 func (bs *BtsBlockScanner) SaveLocalBlockHead(blockHeight uint32, blockHash string) error {
 
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(bs.wm.Config.dbPath, bs.wm.Config.BlockchainFile))
-	if err != nil {
-		return err
+	if bs.BlockchainDAI == nil {
+		return fmt.Errorf("Blockchain DAI is not setup ")
 	}
-	defer db.Close()
 
-	db.Set(blockchainBucket, "blockHeight", &blockHeight)
-	db.Set(blockchainBucket, "blockHash", &blockHash)
+	header := &openwallet.BlockHeader{
+		Hash:   blockHash,
+		Height: uint64(blockHeight),
+		Fork:   false,
+		Symbol: bs.wm.Symbol(),
+	}
 
-	return nil
+	return bs.BlockchainDAI.SaveCurrentBlockHead(header)
 }
 
 //GetLocalBlockHead 获取本地记录的区块高度和hash
 func (bs *BtsBlockScanner) GetLocalBlockHead() (uint32, string, error) {
 
-	var (
-		blockHeight uint32
-		blockHash   string
-	)
+	if bs.BlockchainDAI == nil {
+		return 0, "", fmt.Errorf("Blockchain DAI is not setup ")
+	}
 
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(bs.wm.Config.dbPath, bs.wm.Config.BlockchainFile))
+	header, err := bs.BlockchainDAI.GetCurrentBlockHead(bs.wm.Symbol())
 	if err != nil {
 		return 0, "", err
 	}
-	defer db.Close()
 
-	db.Get(blockchainBucket, "blockHeight", &blockHeight)
-	db.Get(blockchainBucket, "blockHash", &blockHash)
-
-	return blockHeight, blockHash, nil
+	return uint32(header.Height), header.Hash, nil
 }
 
 //SaveLocalBlock 记录本地新区块
 func (bs *BtsBlockScanner) SaveLocalBlock(blockHeader *Block) error {
 
-	db, err := storm.Open(filepath.Join(bs.wm.Config.dbPath, bs.wm.Config.BlockchainFile))
-	if err != nil {
-		return err
+	if bs.BlockchainDAI == nil {
+		return fmt.Errorf("Blockchain DAI is not setup ")
 	}
-	defer db.Close()
 
-	db.Save(blockHeader)
+	header := &openwallet.BlockHeader{
+		Hash:              blockHeader.BlockID,
+		Merkleroot:        blockHeader.TransactionMerkleRoot,
+		Previousblockhash: blockHeader.Previous,
+		Height:            uint64(blockHeader.Height),
+		Time:              uint64(blockHeader.Timestamp.Unix()),
+		Symbol:            bs.wm.Symbol(),
+	}
 
-	return nil
+	return bs.BlockchainDAI.SaveLocalBlockHead(header)
 }
 
 //GetLocalBlock 获取本地区块数据
 func (bs *BtsBlockScanner) GetLocalBlock(height uint32) (*Block, error) {
 
-	var (
-		blockHeader Block
-	)
-
-	db, err := storm.Open(filepath.Join(bs.wm.Config.dbPath, bs.wm.Config.BlockchainFile))
-	if err != nil {
-		return nil, err
+	if bs.BlockchainDAI == nil {
+		return nil, fmt.Errorf("Blockchain DAI is not setup ")
 	}
-	defer db.Close()
 
-	err = db.One("Height", height, &blockHeader)
+	header, err := bs.BlockchainDAI.GetLocalBlockHeadByHeight(uint64(height), bs.wm.Symbol())
 	if err != nil {
 		return nil, err
 	}
 
-	return &blockHeader, nil
+	block := &Block{
+		BlockID:  header.Hash,
+		Previous: header.Previousblockhash,
+		Height:   header.Height,
+	}
+
+	return block, nil
 }
 
 //获取未扫记录
-func (wm *WalletManager) GetUnscanRecords() ([]*UnscanRecord, error) {
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
-	if err != nil {
-		return nil, err
+func (bs *BtsBlockScanner) GetUnscanRecords() ([]*openwallet.UnscanRecord, error) {
+	if bs.BlockchainDAI == nil {
+		return nil, fmt.Errorf("Blockchain DAI is not setup ")
 	}
-	defer db.Close()
 
-	var list []*UnscanRecord
-	err = db.All(&list)
-	if err != nil {
-		return nil, err
-	}
-	return list, nil
+	return bs.BlockchainDAI.GetUnscanRecords(bs.wm.Symbol())
 }
 
 //SaveUnscanRecord 保存交易记录到钱包数据库
-func (bs *BtsBlockScanner) SaveUnscanRecord(record *UnscanRecord) error {
+func (bs *BtsBlockScanner) SaveUnscanRecord(record *openwallet.UnscanRecord) error {
 
-	if record == nil {
-		return errors.New("the unscan record to save is nil")
+	if bs.BlockchainDAI == nil {
+		return fmt.Errorf("Blockchain DAI is not setup ")
 	}
 
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(bs.wm.Config.dbPath, bs.wm.Config.BlockchainFile))
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	return db.Save(record)
+	return bs.BlockchainDAI.SaveUnscanRecord(record)
 }
 
 //DeleteUnscanRecord 删除指定高度的未扫记录
 func (bs *BtsBlockScanner) DeleteUnscanRecord(height uint32) error {
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(bs.wm.Config.dbPath, bs.wm.Config.BlockchainFile))
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	var list []*UnscanRecord
-	err = db.Find("BlockHeight", height, &list)
-	if err != nil {
-		return err
+	if bs.BlockchainDAI == nil {
+		return fmt.Errorf("Blockchain DAI is not setup ")
 	}
 
-	for _, r := range list {
-		db.DeleteStruct(r)
-	}
-
-	return nil
-}
-
-//DeleteUnscanRecordNotFindTX 删除未没有找到交易记录的重扫记录
-func (wm *WalletManager) DeleteUnscanRecordNotFindTX() error {
-
-	//删除找不到交易单
-	reason := "[-5]No information available about transaction"
-
-	//获取本地区块高度
-	db, err := storm.Open(filepath.Join(wm.Config.dbPath, wm.Config.BlockchainFile))
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	var list []*UnscanRecord
-	err = db.All(&list)
-	if err != nil {
-		return err
-	}
-
-	tx, err := db.Begin(true)
-	if err != nil {
-		return err
-	}
-	for _, r := range list {
-		if strings.HasPrefix(r.Reason, reason) {
-			tx.DeleteStruct(r)
-		}
-	}
-	return tx.Commit()
+	return bs.BlockchainDAI.DeleteUnscanRecordByHeight(uint64(height), bs.wm.Symbol())
 }

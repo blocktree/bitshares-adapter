@@ -49,7 +49,7 @@ type WalletConfig struct {
 	//配置文件名
 	configFileName string
 	//区块链数据文件
-	BlockchainFile string
+	//BlockchainFile string
 	//本地数据库文件路径
 	dbPath string
 	//钱包服务API
@@ -82,7 +82,7 @@ func NewConfig(symbol string) *WalletConfig {
 	//配置文件名
 	c.configFileName = c.Symbol + ".ini"
 	//区块链数据文件
-	c.BlockchainFile = "blockchain.db"
+	//c.BlockchainFile = "blockchain.db"
 	//本地数据库文件路径
 	c.dbPath = filepath.Join("data", strings.ToLower(c.Symbol), "db")
 	//钱包服务API
