@@ -24,7 +24,7 @@ var (
 
 //AddressDecoderV2
 type AddressDecoderV2 struct {
-	*openwallet.AddressDecoderV2Base
+	openwallet.AddressDecoderV2Base
 	IsTestNet bool
 }
 
