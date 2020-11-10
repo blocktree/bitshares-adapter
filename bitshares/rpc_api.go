@@ -147,7 +147,7 @@ func (c *WalletClient) GetBlockchainInfo() (*BlockchainInfo, error) {
 
 // GetBlockByHeight returns a certain block
 func (c *WalletClient) GetBlockByHeight(height uint32) (*Block, error) {
-	r, err := c.call("get_block", []interface{}{height}, false)
+	r, err := c.call("get_block", []interface{}{height}, true)
 	if err != nil {
 		return nil, err
 	}
