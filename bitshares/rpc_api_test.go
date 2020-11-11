@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/blocktree/bitshares-adapter/types"
-	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/v2/log"
 )
 
 func TestWalletClient_GetBlockchainInfo(t *testing.T) {

@@ -16,14 +16,15 @@
 package openwtester
 
 import (
-	"github.com/blocktree/openwallet/common/file"
 	"path/filepath"
 	"testing"
 
+	"github.com/blocktree/openwallet/v2/common/file"
+
 	"github.com/astaxie/beego/config"
-	"github.com/blocktree/openwallet/log"
-	"github.com/blocktree/openwallet/openw"
-	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/v2/log"
+	"github.com/blocktree/openwallet/v2/openw"
+	"github.com/blocktree/openwallet/v2/openwallet"
 )
 
 ////////////////////////// 测试单个扫描器 //////////////////////////
@@ -50,6 +51,13 @@ func (sub *subscriberSingle) BlockExtractDataNotify(sourceKey string, data *open
 	}
 
 	log.Std.Notice("data.Transaction: %+v", data.Transaction)
+
+	return nil
+}
+
+func (sub *subscriberSingle) BlockExtractSmartContractDataNotify(sourceKey string, data *openwallet.SmartContractReceipt) error {
+	log.Notice("account:", sourceKey)
+	log.Std.Notice("data: %+v", data)
 
 	return nil
 }

@@ -26,7 +26,7 @@ import (
 
 	"github.com/blocktree/bitshares-adapter/encoding"
 	"github.com/blocktree/bitshares-adapter/types"
-	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/tidwall/gjson"
 )
 

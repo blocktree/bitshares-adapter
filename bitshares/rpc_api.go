@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/blocktree/bitshares-adapter/types"
-	"github.com/blocktree/openwallet/log"
+	"github.com/blocktree/openwallet/v2/log"
 	bt "github.com/denkhaus/bitshares/types"
 	"github.com/imroc/req"
 	"github.com/tidwall/gjson"

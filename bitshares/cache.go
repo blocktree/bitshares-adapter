@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blocktree/openwallet/openwallet"
+	"github.com/blocktree/openwallet/v2/openwallet"
 )
 
 type CacheManager struct {
