@@ -16,7 +16,6 @@
 package bitshares
 
 import (
-	"github.com/blocktree/bitshares-adapter/addrdec"
 	"github.com/blocktree/openwallet/v2/log"
 	"github.com/blocktree/openwallet/v2/openwallet"
 	"github.com/denkhaus/bitshares"
@@ -44,7 +43,7 @@ func NewWalletManager(cacheManager openwallet.ICacheManager) *WalletManager {
 	wm.Api = NewWalletClient(wm.Config.ServerAPI, wm.Config.WalletAPI, false)
 	wm.Blockscanner = NewBlockScanner(&wm)
 	wm.Decoder = NewAddressDecoder(&wm)
-	wm.DecoderV2 = addrdec.NewAddressDecoderV2()
+	wm.DecoderV2 = NewAddressDecoder(&wm)
 	wm.TxDecoder = NewTransactionDecoder(&wm)
 	wm.Log = log.NewOWLogger(wm.Symbol())
 	wm.CacheManager = cacheManager

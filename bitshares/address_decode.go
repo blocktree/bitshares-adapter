@@ -16,7 +16,10 @@
 package bitshares
 
 import (
+	"fmt"
+
 	"github.com/blocktree/bitshares-adapter/addrdec"
+	"github.com/blocktree/openwallet/v2/openwallet"
 )
 
 type addressDecoder struct {
@@ -56,7 +59,6 @@ func (decoder *addressDecoder) WIFToPrivateKey(wif string, isTestnet bool) ([]by
 	return priv, nil
 }
 
-
 // AddressVerify 地址校验
 func (decoder *addressDecoder) AddressVerify(address string, opts ...interface{}) bool {
 	_, err := decoder.wm.Api.GetAccounts(address)
@@ -64,4 +66,14 @@ func (decoder *addressDecoder) AddressVerify(address string, opts ...interface{}
 		return false
 	}
 	return true
+}
+
+// CustomCreateAddress 创建账户地址
+func (decoder *addressDecoder) CustomCreateAddress(account *openwallet.AssetsAccount, newIndex uint64) (*openwallet.Address, error) {
+	return nil, fmt.Errorf("CreateAddressByAccount not implement")
+}
+
+// SupportCustomCreateAddressFunction 支持创建地址实现
+func (decoder *addressDecoder) SupportCustomCreateAddressFunction() bool {
+	return false
 }
