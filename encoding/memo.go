@@ -3,7 +3,6 @@ package encoding
 import (
 	"fmt"
 
-	"github.com/denkhaus/bitshares/config"
 	"github.com/denkhaus/bitshares/types"
 )
 
@@ -11,8 +10,6 @@ import (
 //and the senders public key, then decrypts the given memo message.
 func Decrypt(msg, fromPub, toPub string, nonce uint64, wif string) (string, error) {
 	var buf types.Buffer
-
-	config.SetCurrent(config.ChainIDBTS)
 
 	from, err := types.NewPublicKeyFromString(fromPub)
 	if err != nil {
