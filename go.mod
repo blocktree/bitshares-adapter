@@ -1,4 +1,4 @@
-module github.com/blocktree/bitshares-adapter/v2
+module github.com/blocktree/bitshares-adapter
 
 require (
 	github.com/Sereal/Sereal v0.0.0-20191211210414-3a6c62eca003 // indirect
