@@ -450,7 +450,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		TxType:      0,
 	}
 
-	if operation.Memo != nil {
+	if len(operation.Memo.Message) > 0 {
 		// Config
 		memoPrivateKey := bs.wm.Config.MemoPrivateKey
 
