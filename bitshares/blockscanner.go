@@ -450,16 +450,29 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		TxType:      0,
 	}
 
-	// Decrypt Memo with MemoPrivateKey
-	nonce, err := strconv.ParseUint(operation.Memo.Nonce, 10, 64)
-	if err != nil {
-		bs.wm.Log.Std.Error("ParseUint: %v, %v", err, operation.Memo)
+	if operation.Memo != nil {
+		// Config
+		memoPrivateKey := bs.wm.Config.MemoPrivateKey
+
+		if len(memoPrivateKey) == 0 {
+			bs.wm.Log.Std.Error("Config MemoPrivateKey is empty!")
+		} else {
+			// Decrypt Memo with MemoPrivateKey
+			var nonce uint64
+
+			if len(operation.Memo.Nonce) != 0 {
+				nonce, err = strconv.ParseUint(operation.Memo.Nonce, 10, 64)
+				if err != nil {
+					bs.wm.Log.Std.Error("ParseUint: %v, %v", err, operation.Memo)
+				}
+			}
+			memo, err := encoding.Decrypt(operation.Memo.Message.String(), operation.Memo.From, operation.Memo.To, nonce, memoPrivateKey)
+			if err != nil {
+				bs.wm.Log.Std.Error("Decrypt: %v, %v", err, operation.Memo)
+			}
+			transx.SetExtParam("memo", memo)
+		}
 	}
-	memo, err := encoding.Decrypt(operation.Memo.Message.String(), operation.Memo.From, operation.Memo.To, nonce, bs.wm.Config.MemoPrivateKey)
-	if err != nil {
-		bs.wm.Log.Std.Error("Decrypt: %v, %v", err, operation.Memo)
-	}
-	transx.SetExtParam("memo", memo)
 
 	wxID := openwallet.GenTransactionWxID(transx)
 	transx.WxID = wxID
