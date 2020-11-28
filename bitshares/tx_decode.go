@@ -22,6 +22,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/blocktree/bitshares-adapter/encoding"
 	"github.com/blocktree/bitshares-adapter/types"
 	"github.com/denkhaus/bitshares/config"
 	"github.com/denkhaus/bitshares/crypto"
@@ -123,13 +124,9 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 			To:    *toPublicKey,
 			Nonce: bt.UInt64(rand.Uint64()),
 		}
-		keyBag := crypto.NewKeyBag()
-		keyBag.Add(decoder.wm.Config.MemoPrivateKey)
-
-		if err := keyBag.EncryptMemo(&m, memo); err != nil {
-			return fmt.Errorf("EncryptMemo: %v", err)
-		}
-
+		wif := decoder.wm.Config.MemoPrivateKey
+		encoding.Encrypt(&m, memo, wif)
+		decoder.wm.Log.Debug("memo hash:", m.Message)
 		op.Memo = &m
 	}
 
@@ -245,7 +242,7 @@ func (decoder *TransactionDecoder) VerifyRawTransaction(wrapper openwallet.Walle
 
 			//验签通过后处理V值，符合节点验签
 			compactSig := signature[:len(signature)-1]
-			compactSig = append([]byte{v+27+4}, compactSig...)
+			compactSig = append([]byte{v + 27 + 4}, compactSig...)
 
 			tx.Signatures = append(
 				tx.Signatures,
