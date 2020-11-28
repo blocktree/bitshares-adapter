@@ -466,7 +466,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 					bs.wm.Log.Std.Error("ParseUint: %v, %v", err, operation.Memo)
 				}
 			}
-			memo, err := encoding.Decrypt(operation.Memo.Message.String(), operation.Memo.From, operation.Memo.To, nonce, memoPrivateKey)
+			memo, err := encoding.Decrypt(operation.Memo.Message, operation.Memo.From, operation.Memo.To, nonce, memoPrivateKey)
 			if err != nil {
 				bs.wm.Log.Std.Error("Decrypt: %v, %v", err, operation.Memo)
 			}

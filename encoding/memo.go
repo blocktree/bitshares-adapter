@@ -8,8 +8,7 @@ import (
 
 //Decrypt calculates a shared secret by the receivers private key
 //and the senders public key, then decrypts the given memo message.
-func Decrypt(msg, fromPub, toPub string, nonce uint64, wif string) (string, error) {
-	var buf types.Buffer
+func Decrypt(msg []byte, fromPub, toPub string, nonce uint64, wif string) (string, error) {
 
 	from, err := types.NewPublicKeyFromString(fromPub)
 	if err != nil {
@@ -20,12 +19,10 @@ func Decrypt(msg, fromPub, toPub string, nonce uint64, wif string) (string, erro
 		return "", fmt.Errorf("NewPublicKeyFromString: %v", err)
 	}
 
-	buf.FromString(msg)
-
 	memo := types.Memo{
 		From:    *from,
 		To:      *to,
-		Message: buf,
+		Message: types.Buffer(msg),
 		Nonce:   types.UInt64(nonce),
 	}
 
