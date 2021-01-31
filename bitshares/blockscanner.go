@@ -530,6 +530,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		bs.extractTxInput(operation, feeExtractData)
 
 		txExtractDataArray = append(txExtractDataArray, feeExtractData)
+		bs.wm.Log.Std.Info("extract diff fee: %v", feeExtractData)
 	}
 
 	result.extractData[sourceKey] = txExtractDataArray
@@ -564,6 +565,7 @@ func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, tx
 	txInput.Recharge.CreateAt = time.Now().Unix()
 	txInput.Recharge.TxType = tx.TxType
 	txExtractData.TxInputs = append(txExtractData.TxInputs, txInput)
+	bs.wm.Log.Std.Info("extract input: %v", txInput)
 
 	if tx.TxType == 0 && operation.Fee.Amount > 0 && operation.Fee.AssetID == operation.Amount.AssetID {
 		//手续费也作为一个输出s
@@ -574,6 +576,7 @@ func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, tx
 		feeCharge.Amount = fee.String()
 		feeCharge.TxType = 1
 		txExtractData.TxInputs = append(txExtractData.TxInputs, feeCharge)
+		bs.wm.Log.Std.Info("extract fee: %v", feeCharge)
 	}
 
 }
@@ -606,6 +609,7 @@ func (bs *BtsBlockScanner) extractTxOutput(operation *types.TransferOperation, t
 	txOutput.Recharge.Index = 0 //账户模型填0
 	txOutput.Recharge.CreateAt = time.Now().Unix()
 	txExtractData.TxOutputs = append(txExtractData.TxOutputs, txOutput)
+	bs.wm.Log.Std.Info("extract output: %v", txOutput)
 }
 
 //newExtractDataNotify 发送通知
