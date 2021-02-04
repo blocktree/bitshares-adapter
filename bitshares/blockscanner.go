@@ -479,12 +479,12 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 
 	txExtractData.Transaction = transx
 	if optType == 0 {
-		bs.extractTxInput(operation, txExtractData)
-		bs.extractTxOutput(operation, txExtractData)
+		bs.extractTxInput(from.Name, operation, txExtractData)
+		bs.extractTxOutput(to.Name, operation, txExtractData)
 	} else if optType == 1 {
-		bs.extractTxInput(operation, txExtractData)
+		bs.extractTxInput(from.Name, operation, txExtractData)
 	} else if optType == 2 {
-		bs.extractTxOutput(operation, txExtractData)
+		bs.extractTxOutput(to.Name, operation, txExtractData)
 	}
 
 	txExtractDataArray = append(txExtractDataArray, txExtractData)
@@ -527,7 +527,7 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 		feeTransx.WxID = wxID
 
 		feeExtractData := &openwallet.TxExtractData{Transaction: feeTransx}
-		bs.extractTxInput(operation, feeExtractData)
+		bs.extractTxInput(from.Name, operation, feeExtractData)
 
 		txExtractDataArray = append(txExtractDataArray, feeExtractData)
 		bs.wm.Log.Std.Info("extract diff fee: %v", feeExtractData)
@@ -537,23 +537,16 @@ func (bs *BtsBlockScanner) InitExtractResult(sourceKey string, operation *types.
 }
 
 //extractTxInput 提取交易单输入部分,无需手续费，所以只包含1个TxInput
-func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, txExtractData *openwallet.TxExtractData) {
+func (bs *BtsBlockScanner) extractTxInput(from string, operation *types.TransferOperation, txExtractData *openwallet.TxExtractData) {
 
 	tx := txExtractData.Transaction
 	coin := openwallet.Coin(tx.Coin)
-
-	accounts, err := bs.wm.Api.GetAccounts(operation.From.String())
-	if len(accounts) != 1 {
-		bs.wm.Log.Std.Error("cannot get accounts, %s \n %v", operation.From.String(), err)
-		return
-	}
-	from := accounts[0]
 
 	//主网from交易转账信息，第一个TxInput
 	txInput := &openwallet.TxInput{}
 	txInput.Recharge.Sid = openwallet.GenTxInputSID(tx.TxID, bs.wm.Symbol(), coin.ContractID, uint64(0))
 	txInput.Recharge.TxID = tx.TxID
-	txInput.Recharge.Address = from.Name
+	txInput.Recharge.Address = from
 	txInput.Recharge.Coin = coin
 	txInput.Recharge.Amount = tx.Amount
 	txInput.Recharge.Symbol = coin.Symbol
@@ -582,23 +575,16 @@ func (bs *BtsBlockScanner) extractTxInput(operation *types.TransferOperation, tx
 }
 
 //extractTxOutput 提取交易单输入部分,只有一个TxOutPut
-func (bs *BtsBlockScanner) extractTxOutput(operation *types.TransferOperation, txExtractData *openwallet.TxExtractData) {
+func (bs *BtsBlockScanner) extractTxOutput(to string, operation *types.TransferOperation, txExtractData *openwallet.TxExtractData) {
 
 	tx := txExtractData.Transaction
 	coin := openwallet.Coin(tx.Coin)
-
-	accounts, err := bs.wm.Api.GetAccounts(operation.To.String())
-	if len(accounts) != 1 {
-		bs.wm.Log.Std.Error("cannot get accounts, %s \n %v", operation.To.String(), err)
-		return
-	}
-	to := accounts[0]
 
 	//主网to交易转账信息,只有一个TxOutPut
 	txOutput := &openwallet.TxOutPut{}
 	txOutput.Recharge.Sid = openwallet.GenTxOutPutSID(tx.TxID, bs.wm.Symbol(), coin.ContractID, uint64(0))
 	txOutput.Recharge.TxID = tx.TxID
-	txOutput.Recharge.Address = to.Name
+	txOutput.Recharge.Address = to
 	txOutput.Recharge.Coin = coin
 	txOutput.Recharge.Amount = tx.Amount
 	txOutput.Recharge.Symbol = coin.Symbol
