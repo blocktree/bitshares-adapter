@@ -502,7 +502,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 
 	info, err := decoder.wm.Api.GetBlockchainInfo()
 	if err != nil {
-		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "GetBlockchainInfo")
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "GetBlockchainInfo: %v", err)
 	}
 
 	j, _ := json.Marshal(info.HeadBlockID)
