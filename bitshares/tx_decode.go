@@ -80,7 +80,7 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 	// 检查转出、目标账户是否存在
 	accounts, err := decoder.wm.Api.GetAccounts(account.Alias, to)
 	if err != nil {
-		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "accounts have not registered [%v] ", err)
+		return openwallet.Errorf(openwallet.ErrAccountNotAddress, "unexpected error: %v", err)
 	}
 
 	fromAccount := accounts[0]
@@ -88,7 +88,10 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 
 	// 检查转出账户余额
 	balance, err := decoder.wm.Api.GetAssetsBalance(fromAccount.ID, assetID)
-	if err != nil || balance == nil {
+	if err != nil {
+		return openwallet.Errorf(openwallet.ErrNetworkRequestFailed, "call rpc get unexpected error: %v", err)
+	}
+	if balance == nil {
 		return openwallet.Errorf(openwallet.ErrInsufficientBalanceOfAccount, "all address's balance of account is not enough")
 	}
 
@@ -361,7 +364,7 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper 
 	// 检查转出、目标账户是否存在
 	accounts, err := decoder.wm.Api.GetAccounts(account.Alias, sumRawTx.SummaryAddress)
 	if err != nil {
-		return nil, openwallet.Errorf(openwallet.ErrAccountNotAddress, "accounts have not registered [%v] ", err)
+		return nil, openwallet.Errorf(openwallet.ErrAccountNotAddress, "unexpected error: %v", err)
 	}
 
 	fromAccount := accounts[0]
@@ -484,7 +487,7 @@ func (decoder *TransactionDecoder) createRawTransaction(
 
 	fees, err := decoder.wm.Api.GetRequiredFee(operations, assetID.String())
 	if err != nil {
-		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "can't get fees")
+		return openwallet.Errorf(openwallet.ErrCreateRawTransactionFailed, "can't get fees: %v", err)
 	}
 
 	feesDec := decimal.Zero
